@@ -1,10 +1,17 @@
 #pragma once
 #include "Handle.h"
 
-class Mutex : Handle {
+class Mutex {
     // class that store a mutex and handle destructor
   public:
-    Mutex(HANDLE h);
+    Mutex(const HANDLE h);
+    
 
-    virtual ~Mutex();
+    HANDLE getHandle() const;
+
+    ~Mutex();
+
+private:
+    const Handle m_handle;
 };
+

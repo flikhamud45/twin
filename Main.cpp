@@ -2,6 +2,7 @@
 #include "Mutex.h"
 #include "Socket.h"
 
+#include "Handle.h"
 #include <iostream>
 
 constexpr char MUTEX_NAME[] = "technai_mutex";
@@ -10,6 +11,7 @@ constexpr WCHAR PROGRAM_NAME[] = L"Technai";
 constexpr WCHAR PROGRAM_PATH[] = L"C:\\Users\\User\\source\\repos\\twin\\x64\\Debug\\twin.exe";
 constexpr char DEFAULT_MSG[] = "MANAGMENT PROGRAM IS UP";
 constexpr char DEFAULT_TITLE[] = "MANAGMENT PROGRAM";
+
 
 constexpr char ERROR_MSG[] = "Unknown Command";
 constexpr char PING_COMMAND[] = "ping";
@@ -58,9 +60,8 @@ Mutex ensureOneProgram() {
     } else if (waitStatus == WAIT_TIMEOUT) {
         std::cout << "program is already running...\n";
         exit(1);
-    } else if (waitStatus == waitStatus) {
-        throw WinapiException("WaitForSingleObject",
-                              WinapiErrorType::standardError);
+    } else if (waitStatus == WAIT_FAILED){
+        throw WinapiException("WaitForSingleObject", WinapiErrorType::standardError);
     } else {
         std::cout << "Unknown error\n";
         exit(1);
