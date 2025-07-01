@@ -1,9 +1,8 @@
 #include "Main.h"
-#include "Mutex.h"
-#include "Socket.h"
 
-#include "Handle.h"
-#include <iostream>
+// Link with ws2_32.lib
+#pragma comment(lib, "Ws2_32.lib")
+
 
 constexpr char MUTEX_NAME[] = "technai_mutex";
 constexpr char RUN_REG[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
@@ -100,10 +99,9 @@ void openMessageBox(const char* msg = DEFAULT_MSG,
 void handleClient(ClientSocket client) {
     try {
         std::string msg = client.recvMsg();
-        switch (msg) {
-        case PING_COMMAND:
+        if (msg ==PING_COMMAND)
             client.sendMsg(PONG_COMMAND);
-        default:
+        else{
             throw ClientException::invalidMsg;
         }
     }

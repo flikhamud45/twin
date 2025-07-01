@@ -1,8 +1,6 @@
 
 #include "Handle.h"
 
-#include <iostream>
-
 
 Handle::Handle(HANDLE h) : m_handle(h) {
     // blank intentionally

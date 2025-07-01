@@ -1,10 +1,8 @@
 #pragma once
+#include "Main.h"
 #include "AddrInfo.h"
-#define WIN32_LEAN_AND_MEAN
 
-#include <Ws2tcpip.h>
-#include <stdio.h>
-#include <winsock2.h>
+constexpr char DEFAULT_PORT[] = "12345";
 
 // Link with ws2_32.lib
 #pragma comment(lib, "Ws2_32.lib")

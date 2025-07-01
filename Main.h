@@ -1,16 +1,18 @@
 #pragma once
-#include <exception>
-#include <windows.h>
 #define WIN32_LEAN_AND_MEAN
-
+#include <windows.h>
+#include "Mutex.h"
+#include "Socket.h"
 #include <Ws2tcpip.h>
 #include <stdio.h>
-#include <winsock2.h>
+#include <iostream>
+#include <exception>
 
-// Link with ws2_32.lib
-#pragma comment(lib, "Ws2_32.lib")
 
-constexpr char DEFAULT_PORT[]  = "12345";
+
+
+
+
 
 BOOL wsaInitiated = FALSE;
 

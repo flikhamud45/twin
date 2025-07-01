@@ -1,5 +1,5 @@
 #include "Mutex.h"
-#include <iostream>
+
 
 
 Mutex::Mutex(const HANDLE h) : m_handle(h) {
