@@ -3,6 +3,8 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 
+#include "twin.h"
+
 #include "handlers.h"
 #include <iphlpapi.h>
 #include <windows.h>
@@ -20,24 +22,7 @@ constexpr WCHAR PROGRAM_NAME[] = L"Technai";
 constexpr WCHAR PROGRAM_PATH[] = L"C:\\Users\\User\\source\\repos\\twin\\x64\\Debug\\twin.exe";
 
 
-#define DEFAULT_PORT "12345"
 
-
-enum class WinapiError
-{
-    winapiError = 1,
-    wsaError,
-    otherError
-};
-
-
-
-const char* lastWinapiFunction = "";
-int lastError = 0;
-
-
-BOOL wsaInitiated = FALSE;
-PADDRINFOA addr = NULL;
 std::vector<SOCKET> sockets;
 
 
@@ -131,105 +116,17 @@ void openMessageBox()
 }
 
 
-void wsaInit()
-{
-    // init the wsa if needed
-    if (!wsaInitiated)
-    {
-        WSADATA wsaData;
-        int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-        if (iResult != 0)
-        {
-            lastError = iResult;
-            lastWinapiFunction = "WSAStartup";
-            throw WinapiError::otherError;
-        }
-        wsaInitiated = TRUE;
-    }
-}
 
-PADDRINFOA getServerAddr()
-{
-    // return a addrinfo of for the server
-
-    struct addrinfo *result = NULL, *ptr = NULL, hints;
-
-    ZeroMemory(&hints, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-    hints.ai_flags = AI_PASSIVE;
-
-    // Resolve the local address and port to be used by the server
-    int iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
-    if (iResult != 0)
-    {
-        lastError = iResult;
-        lastWinapiFunction = "getaddrinfo";
-        throw WinapiError::otherError;
-    }
-    addr = result;
-    return result;
-}
-
-SOCKET createSocket(PADDRINFOA result)
-{
-    // create a socket
-
-    // Create a SOCKET for the server to listen for client connections
-    SOCKET ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (ListenSocket == INVALID_SOCKET)
-    {
-        lastWinapiFunction = "socket";
-        throw WinapiError::wsaError;
-    }
-    sockets.push_back(ListenSocket);
-    return ListenSocket;
-}
-
-void bindListenSocket(PADDRINFOA result, const SOCKET& ListenSocket)
-{
-    // bind a socket and listen (no blocking)
-
-    // Setup the TCP listening socket
-    int iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
-    if (iResult == SOCKET_ERROR)
-    {
-        lastWinapiFunction = "bind";
-        throw WinapiError::wsaError;
-    }
-
-    if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR)
-    {
-        lastWinapiFunction = "listen";
-        throw WinapiError::wsaError;
-    }
-}
-
-SOCKET acceptClient(const SOCKET& ListenSocket)
-{
-    SOCKET ClientSocket = accept(ListenSocket, NULL, NULL);
-    if (ClientSocket == INVALID_SOCKET)
-    {
-        lastWinapiFunction = "accept";
-        throw WinapiError::wsaError;
-    }
-    sockets.push_back(ClientSocket);
-}
 
 SOCKET waitForClient()
 {
     wsaInit();
 
-    PADDRINFOA result = getServerAddr();
+    AddrInfo result = getServerAddr();
 
-    SOCKET ListenSocket = createSocket(result);
+    SOCKET ListenSocket = createSocket(result.getAddr());
 
-    bindListenSocket(result, ListenSocket);
-
-    freeaddrinfo(addr);
-    addr = NULL;
-
+    bindListenSocket(result.getAddr(), ListenSocket);
 
     SOCKET ClientSocket = acceptClient(ListenSocket);
 

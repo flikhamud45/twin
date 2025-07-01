@@ -1,5 +1,6 @@
 #pragma once
 #include <windows.h>
+#include <ws2def.h>
 
 class Handle
 {
@@ -22,4 +23,31 @@ class Mutex : Handle
     Mutex(HANDLE h);
 
     ~Mutex();
+};
+
+
+class AddrInfo
+{
+public:
+    AddrInfo(PADDRINFOA addr);
+
+    ~AddrInfo();
+
+    PADDRINFOA getAddr();
+
+private:
+    PADDRINFOA m_addr;
+};
+
+class Socket
+{
+public:
+    Socket(SOCKET s);
+
+    ~Socket();
+
+    SOCKET getSocket();
+
+private:
+    SOCKET m_socket;
 };

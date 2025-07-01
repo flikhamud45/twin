@@ -1,5 +1,6 @@
 #include "handlers.h"
 #include <iostream>
+#include <ws2tcpip.h>
 
 
 Handle::Handle(HANDLE h) : m_handle(h)
@@ -30,3 +31,37 @@ Mutex::~Mutex()
         std::cout << "error number " << GetLastError() << " in ReleaseMutex\n";
     }
 }
+
+AddrInfo::AddrInfo(PADDRINFOA addr) : m_addr(addr)
+{
+    // blank intentionally
+}
+
+PADDRINFOA AddrInfo::getAddr()
+{
+    return m_addr;
+}
+
+AddrInfo::~AddrInfo()
+{
+    freeaddrinfo(m_addr);
+}
+
+Socket::Socket(SOCKET s) : m_socket(s)
+{
+    // blank intentionally
+}
+
+Socket::~Socket()
+{
+    closesocket(m_socket);
+}
+
+SOCKET Socket::getSocket()
+{
+    return m_socket;
+}
+
+
+
+
