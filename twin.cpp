@@ -1,7 +1,9 @@
+
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
 
+#include "handlers.h"
 #include <iphlpapi.h>
 #include <windows.h>
 #include <winsock2.h>
@@ -12,31 +14,37 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
-#define MUTEX_NAME "technai_mutex"
-#define RUN_REG "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
-#define PROGRAM_NAME "Technai"
-#define PROGRAM_PATH "C:\\Users\\User\\source\\repos\\twin\\x64\\Debug\\twin.exe"
+constexpr char MUTEX_NAME[] = "technai_mutex";
+constexpr char RUN_REG[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+constexpr WCHAR PROGRAM_NAME[] = L"Technai";
+constexpr WCHAR PROGRAM_PATH[] = L"C:\\Users\\User\\source\\repos\\twin\\x64\\Debug\\twin.exe";
+
 
 #define DEFAULT_PORT "12345"
 
-enum WinapiError
+
+enum class WinapiError
 {
-    winapiError,
+    winapiError = 1,
     wsaError,
     otherError
 };
 
+
+
 const char* lastWinapiFunction = "";
-std::vector<HANDLE> handles;
 int lastError = 0;
+
 
 BOOL wsaInitiated = FALSE;
 PADDRINFOA addr = NULL;
 std::vector<SOCKET> sockets;
 
 
-HANDLE ensureOneOrogram()
+
+Mutex ensureOneOrogram()
 {
+    // ensure that there is only one program running and return a locked mutex.
     HANDLE mutex = CreateMutexA(
         NULL,
         TRUE,
@@ -50,24 +58,23 @@ HANDLE ensureOneOrogram()
     }
 
     DWORD waitStatus = WaitForSingleObject(mutex, 0);
-    if (waitStatus == WAIT_OBJECT_0)
+    if (waitStatus == WAIT_OBJECT_0 || waitStatus == WAIT_ABANDONED)
     {
-        handles.push_back(mutex);
         return mutex;
     }
-    else if (waitStatus == WAIT_ABANDONED || waitStatus == WAIT_TIMEOUT)
+    else if (waitStatus == WAIT_TIMEOUT)
     {
         std::cout << "program is already running...\n";
         exit(1);
     }
     else if (waitStatus == waitStatus)
     {
-        std::cout << "error number " << GetLastError() << " in WaitForSingleObject\n";
-        exit(1);
+        lastWinapiFunction = "WaitForSingleObject";
+        throw WinapiError::winapiError;
     }
     else
     {
-        std::cout << "Unkwon error\n";
+        std::cout << "Unknown error\n";
         exit(1);
     }
 
@@ -89,22 +96,22 @@ void RunOnStartUp()
     {
         lastWinapiFunction = "RegCreateKeyA";
         lastError = s;
-        throw otherError;
+        throw WinapiError::otherError;
     }
 
-    s = RegSetKeyValueA(
+    s = RegSetKeyValueW(
         hkey, 
         NULL,
         PROGRAM_NAME, 
         REG_SZ,
         PROGRAM_PATH, 
-        (DWORD)strlen(PROGRAM_PATH) + 1
+        static_cast<DWORD>(wcslen(PROGRAM_PATH)) + 1 // including the null terminator as needed according to the doc of the function
     );
     RegCloseKey(hkey);
     if (s != ERROR_SUCCESS)
     {
-        lastWinapiFunction = "RegCreateKeyA";
-        throw winapiError;
+        lastWinapiFunction = "RegSetKeyValueW";
+        throw WinapiError::winapiError;
     }
 }
 
@@ -119,7 +126,7 @@ void openMessageBox()
     if (! msgbox)
     {
         lastWinapiFunction = "MessageBoxA";
-        throw winapiError;
+        throw WinapiError::winapiError;
     }
 }
 
@@ -135,7 +142,7 @@ void wsaInit()
         {
             lastError = iResult;
             lastWinapiFunction = "WSAStartup";
-            throw otherError;
+            throw WinapiError::otherError;
         }
         wsaInitiated = TRUE;
     }
@@ -159,7 +166,7 @@ PADDRINFOA getServerAddr()
     {
         lastError = iResult;
         lastWinapiFunction = "getaddrinfo";
-        throw otherError;
+        throw WinapiError::otherError;
     }
     addr = result;
     return result;
@@ -174,7 +181,7 @@ SOCKET createSocket(PADDRINFOA result)
     if (ListenSocket == INVALID_SOCKET)
     {
         lastWinapiFunction = "socket";
-        throw wsaError;
+        throw WinapiError::wsaError;
     }
     sockets.push_back(ListenSocket);
     return ListenSocket;
@@ -189,13 +196,13 @@ void bindListenSocket(PADDRINFOA result, const SOCKET& ListenSocket)
     if (iResult == SOCKET_ERROR)
     {
         lastWinapiFunction = "bind";
-        throw wsaError;
+        throw WinapiError::wsaError;
     }
 
     if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR)
     {
         lastWinapiFunction = "listen";
-        throw wsaError;
+        throw WinapiError::wsaError;
     }
 }
 
@@ -205,7 +212,7 @@ SOCKET acceptClient(const SOCKET& ListenSocket)
     if (ClientSocket == INVALID_SOCKET)
     {
         lastWinapiFunction = "accept";
-        throw wsaError;
+        throw WinapiError::wsaError;
     }
     sockets.push_back(ClientSocket);
 }
@@ -248,11 +255,9 @@ void startServer()
 
 int main()
 {
-    HANDLE mutex = ensureOneOrogram();
-    
-    
     try
     {
+        Mutex m = ensureOneOrogram();
         RunOnStartUp();
         openMessageBox();
     }
@@ -260,10 +265,10 @@ int main()
     {
         switch (e)
         {
-        case winapiError:
+        case WinapiError::winapiError:
             lastError = GetLastError();
             break;
-        case wsaError:
+        case WinapiError::wsaError:
             lastError = WSAGetLastError();
             break;
         default:
@@ -272,16 +277,13 @@ int main()
 
         std::cout << "error number " << lastError << " in " << lastWinapiFunction <<"\n";    
     }
-    if (mutex != NULL)
+    catch (const std::exception& e)
     {
-        if (!ReleaseMutex(mutex))
-        {
-            std::cout << "error number " << GetLastError() << " in ReleaseMutex\n";    
-        }
+        std::cout << "Unknown exception: " << e.what() << "\n";
     }
-    for (HANDLE h : handles)
+    catch (...)
     {
-        CloseHandle(h);
+        std::cout << "Unknown exception\n";
     }
     if (wsaInitiated)
     {
