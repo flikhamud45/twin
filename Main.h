@@ -1,7 +1,7 @@
 #pragma once
 #include <exception>
 
-enum class WinapiError
+enum class WinapiErrorType
 {
     standartError = 1,
     otherError
@@ -10,7 +10,7 @@ enum class WinapiError
 class WinapiException : public std::exception
 {
   public:
-    WinapiException(const char* lastFunc, WinapiError error);
+    WinapiException(const char* lastFunc, WinapiErrorType error);
 
     WinapiException(const char* lastFunc, int errorno);
 
