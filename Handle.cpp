@@ -1,4 +1,6 @@
-#include "Closers.h"
+
+#include "Handle.h"
+
 #include <iostream>
 
 
@@ -12,9 +14,5 @@ Handle::~Handle() {
 
 HANDLE Handle::getHandle() {
     return m_handle;
-}
-
-Mutex::Mutex(HANDLE h) : Handle(h) {
-    // blank intentionally
 }
 

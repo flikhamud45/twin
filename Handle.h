@@ -15,11 +15,3 @@ class Handle
     HANDLE m_handle;
 };
 
-class Mutex : Handle
-{
-    // class that store a mutex and handle destructor
-  public:
-    Mutex(HANDLE h);
-
-    ~Mutex();
-};
