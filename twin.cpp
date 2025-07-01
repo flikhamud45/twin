@@ -70,7 +70,8 @@ void RunOnStartUp()
     if (s != ERROR_SUCCESS)
     {
         lastWinapiFunction = "RegCreateKeyA";
-        throw winapiError;
+        lastError = s;
+        throw otherError;
     }
 
     s = RegSetKeyValueA(
