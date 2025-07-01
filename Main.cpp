@@ -9,7 +9,6 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iostream>
-#include <vector>
 
 constexpr char MUTEX_NAME[] = "technai_mutex";
 constexpr char RUN_REG[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";

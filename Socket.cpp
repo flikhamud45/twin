@@ -1,7 +1,8 @@
 #include "socket.h"
-#include "twin.h"
+#include "Main.h"
 #include <windows.h>
 #include <ws2tcpip.h>
+#include <winsock2.h>
 
 void wsaInit()
 {
@@ -12,9 +13,7 @@ void wsaInit()
         int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
         if (iResult != 0)
         {
-            lastError = iResult;
-            lastWinapiFunction = "WSAStartup";
-            throw WinapiError::otherError;
+            throw WinapiException("WSAStartup", iResult);
         }
         wsaInitiated = TRUE;
     }
@@ -36,9 +35,7 @@ PADDRINFOA getServerAddr(const char* port)
     int iResult = getaddrinfo(NULL, port, &hints, &result);
     if (iResult != 0)
     {
-        lastError = iResult;
-        lastWinapiFunction = "getaddrinfo";
-        throw WinapiError::otherError;
+        throw WinapiException("getaddrinfo", iResult);
     }
     return result;
 }
@@ -51,8 +48,7 @@ SOCKET createSocket(PADDRINFOA result)
     SOCKET ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (ListenSocket == INVALID_SOCKET)
     {
-        lastWinapiFunction = "socket";
-        throw WinapiError::wsaError;
+        throw WinapiException("socket", WinapiError::wsaError);
     }
     return ListenSocket;
 }
@@ -63,8 +59,7 @@ void bindSocket(PADDRINFOA result, const SOCKET& ListenSocket)
     int iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
     if (iResult == SOCKET_ERROR)
     {
-        lastWinapiFunction = "bind";
-        throw WinapiError::wsaError;
+        throw WinapiException("bind", WinapiError::wsaError);
     }
 }
 
@@ -75,8 +70,7 @@ void listenSocket(const SOCKET& ListenSocket)
 
     if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR)
     {
-        lastWinapiFunction = "listen";
-        throw WinapiError::wsaError;
+        throw WinapiException("listen", WinapiError::wsaError);
     }
 }
 
@@ -86,8 +80,7 @@ SOCKET acceptClient(const SOCKET& ListenSocket)
     SOCKET ClientSocket = accept(ListenSocket, NULL, NULL);
     if (ClientSocket == INVALID_SOCKET)
     {
-        lastWinapiFunction = "accept";
-        throw WinapiError::wsaError;
+        throw WinapiException("accept", WinapiError::wsaError);
     }
     return ClientSocket;
     
