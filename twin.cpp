@@ -31,6 +31,9 @@ std::vector<HANDLE> handles;
 int lastError = 0;
 
 BOOL wsaInitiated = FALSE;
+PADDRINFOA addr = NULL;
+std::vector<SOCKET> sockets;
+
 
 HANDLE ensureOneOrogram()
 {
@@ -120,17 +123,27 @@ void openMessageBox()
     }
 }
 
-void startServer()
+
+void wsaInit()
 {
-    WSADATA wsaData;
-    int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (iResult != 0)
+    // init the wsa if needed
+    if (!wsaInitiated)
     {
-        lastError = iResult;
-        lastWinapiFunction = "WSAStartup";
-        throw otherError;
+        WSADATA wsaData;
+        int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+        if (iResult != 0)
+        {
+            lastError = iResult;
+            lastWinapiFunction = "WSAStartup";
+            throw otherError;
+        }
+        wsaInitiated = TRUE;
     }
-    wsaInitiated = TRUE;
+}
+
+PADDRINFOA getServerAddr()
+{
+    // return a addrinfo of for the server
 
     struct addrinfo *result = NULL, *ptr = NULL, hints;
 
@@ -141,34 +154,95 @@ void startServer()
     hints.ai_flags = AI_PASSIVE;
 
     // Resolve the local address and port to be used by the server
-    iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
+    int iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
     if (iResult != 0)
     {
         lastError = iResult;
         lastWinapiFunction = "getaddrinfo";
         throw otherError;
     }
+    addr = result;
+    return result;
+}
+
+SOCKET createSocket(PADDRINFOA result)
+{
+    // create a socket
 
     // Create a SOCKET for the server to listen for client connections
     SOCKET ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (ListenSocket == INVALID_SOCKET)
     {
-        freeaddrinfo(result);
         lastWinapiFunction = "socket";
         throw wsaError;
     }
+    sockets.push_back(ListenSocket);
+    return ListenSocket;
+}
+
+void bindListenSocket(PADDRINFOA result, const SOCKET& ListenSocket)
+{
+    // bind a socket and listen (no blocking)
 
     // Setup the TCP listening socket
-    iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
+    int iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
     if (iResult == SOCKET_ERROR)
     {
-        printf("bind failed with error: %d\n", WSAGetLastError());
-        freeaddrinfo(result);
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
+        lastWinapiFunction = "bind";
+        throw wsaError;
     }
 
+    if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR)
+    {
+        lastWinapiFunction = "listen";
+        throw wsaError;
+    }
+}
+
+SOCKET acceptClient(const SOCKET& ListenSocket)
+{
+    SOCKET ClientSocket = accept(ListenSocket, NULL, NULL);
+    if (ClientSocket == INVALID_SOCKET)
+    {
+        lastWinapiFunction = "accept";
+        throw wsaError;
+    }
+    sockets.push_back(ClientSocket);
+}
+
+SOCKET waitForClient()
+{
+    wsaInit();
+
+    PADDRINFOA result = getServerAddr();
+
+    SOCKET ListenSocket = createSocket(result);
+
+    bindListenSocket(result, ListenSocket);
+
+    freeaddrinfo(addr);
+    addr = NULL;
+
+
+    SOCKET ClientSocket = acceptClient(ListenSocket);
+
+    closesocket(ListenSocket);
+    ListenSocket = INVALID_SOCKET;
+    return ClientSocket;
+}
+
+
+void talkWithClient(const SOCKET& ClientSocket)
+{
+    
+}
+
+void startServer()
+{
+    
+    SOCKET ClientSocket = waitForClient();
+
+    talkWithClient(ClientSocket);
 
 }
 
@@ -212,6 +286,17 @@ int main()
     if (wsaInitiated)
     {
         WSACleanup();
+    }
+    if (addr)
+    {
+        freeaddrinfo(addr);
+    }
+    for (const SOCKET socket : sockets)
+    {
+        if (socket != INVALID_SOCKET)
+        {
+            closesocket(socket);
+        }
     }
 
 }
