@@ -1,31 +1,26 @@
-#include "handlers.h"
+#include "Closers.h"
 #include <iostream>
 #include <ws2tcpip.h>
 
 
-Handle::Handle(HANDLE h) : m_handle(h)
-{
+Handle::Handle(HANDLE h) : m_handle(h) {
     // blank intentionally
 }
 
-Handle::~Handle()
-{
+Handle::~Handle() {
     CloseHandle(m_handle);
 }
 
-HANDLE Handle::getHandle()
-{
+HANDLE Handle::getHandle() {
     return m_handle;
 }
 
-Mutex::Mutex(HANDLE h) : Handle(h)
-{
+Mutex::Mutex(HANDLE h) : Handle(h) {
     // blank intentionally
 }
 
 
-Mutex::~Mutex()
-{
+Mutex::~Mutex() {
     if (!ReleaseMutex(m_handle))
     {
         std::cout << "error number " << GetLastError() << " in ReleaseMutex\n";

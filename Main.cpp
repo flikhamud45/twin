@@ -1,11 +1,9 @@
-
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
 
-#include "twin.h"
-
-#include "handlers.h"
+#include "Main.h"
+#include "Closers.h"
 #include <iphlpapi.h>
 #include <windows.h>
 #include <winsock2.h>
@@ -13,110 +11,95 @@
 #include <iostream>
 #include <vector>
 
-
-#pragma comment(lib, "Ws2_32.lib")
-
 constexpr char MUTEX_NAME[] = "technai_mutex";
 constexpr char RUN_REG[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 constexpr WCHAR PROGRAM_NAME[] = L"Technai";
 constexpr WCHAR PROGRAM_PATH[] = L"C:\\Users\\User\\source\\repos\\twin\\x64\\Debug\\twin.exe";
+constexpr char DEFAULT_MSG[] = "MANAGMENT PROGRAM IS UP";
+constexpr char DEFAULT_TITLE[] = "MANAGMENT PROGRAM";
+
+
+WinapiException::WinapiException(const char* lastFunc, WinapiError error) : m_lastFunc(lastFunc) {
+    switch (error) {
+    case WinapiError::standartError:
+        m_errorno = GetLastError();
+        break;
+    case WinapiError::wsaError:
+        m_errorno = WSAGetLastError();
+        break;
+    default:
+        m_errorno = 0;
+        break;
+    }
+}
+
+WinapiException::WinapiException(const char* lastFunc, int errorno) : m_lastFunc(lastFunc), m_errorno(errorno) {
+    // blank
+}
+
+
+int WinapiException::getErrorno() {
+    return m_errorno;
+}
+
+const char* WinapiException::getLastFunc() {
+    return m_lastFunc;
+}
 
 
 
-std::vector<SOCKET> sockets;
-
-
-
-Mutex ensureOneOrogram()
-{
+Mutex ensureOneProgram() {
     // ensure that there is only one program running and return a locked mutex.
-    HANDLE mutex = CreateMutexA(
-        NULL,
-        TRUE,
-        MUTEX_NAME
-    );
+    HANDLE mutex = CreateMutexA(NULL, TRUE, MUTEX_NAME);
 
-    if (mutex == NULL)
-    {
+    if (mutex == NULL) {
         std::cout << "error number " << GetLastError() << " in CreateMutexA\n";
         exit(1);
     }
 
     DWORD waitStatus = WaitForSingleObject(mutex, 0);
-    if (waitStatus == WAIT_OBJECT_0 || waitStatus == WAIT_ABANDONED)
-    {
+    if (waitStatus == WAIT_OBJECT_0 || waitStatus == WAIT_ABANDONED) {
         return mutex;
-    }
-    else if (waitStatus == WAIT_TIMEOUT)
-    {
+    } else if (waitStatus == WAIT_TIMEOUT) {
         std::cout << "program is already running...\n";
         exit(1);
-    }
-    else if (waitStatus == waitStatus)
-    {
-        lastWinapiFunction = "WaitForSingleObject";
-        throw WinapiError::winapiError;
-    }
-    else
-    {
+    } else if (waitStatus == waitStatus) {
+        throw WinapiException("WaitForSingleObject",
+                              WinapiError::standartError);
+    } else {
         std::cout << "Unknown error\n";
         exit(1);
     }
-
 }
 
-
-
-void RunOnStartUp()
-{
+void runOnStartUp() {
     HKEY hkey;
 
-    LSTATUS s = RegCreateKeyA(
-        HKEY_CURRENT_USER,
-        RUN_REG,
-        &hkey
-    );
+    LSTATUS status = RegCreateKeyA(HKEY_CURRENT_USER, RUN_REG, &hkey);
 
-    if (s != ERROR_SUCCESS)
-    {
-        lastWinapiFunction = "RegCreateKeyA";
-        lastError = s;
-        throw WinapiError::otherError;
+    if (status != ERROR_SUCCESS) {
+        throw WinapiException("RegCreateKeyA", status);
     }
 
-    s = RegSetKeyValueW(
-        hkey, 
-        NULL,
-        PROGRAM_NAME, 
-        REG_SZ,
-        PROGRAM_PATH, 
-        static_cast<DWORD>(wcslen(PROGRAM_PATH)) + 1 // including the null terminator as needed according to the doc of the function
+    status = RegSetKeyValueW(hkey, NULL, PROGRAM_NAME, REG_SZ, PROGRAM_PATH,
+                             static_cast<DWORD>(wcslen(PROGRAM_PATH)) +
+                                 1 // including the null terminator as needed
+                                   // according to the doc of the function
     );
     RegCloseKey(hkey);
-    if (s != ERROR_SUCCESS)
-    {
-        lastWinapiFunction = "RegSetKeyValueW";
-        throw WinapiError::winapiError;
+    if (status != ERROR_SUCCESS) {
+        throw WinapiException("RegSetKeyValueW", status);
     }
 }
 
-void openMessageBox()
-{
-    int msgbox = MessageBoxA(
-        NULL,
-        "MANAGMENT PROGRAM IS UP",
-        "MANAGMENT PROGRAM",
-        MB_OK
-    );
-    if (! msgbox)
-    {
-        lastWinapiFunction = "MessageBoxA";
-        throw WinapiError::winapiError;
+void openMessageBox(const char* msg = DEFAULT_MSG,
+                    const char* title = DEFAULT_TITLE) {
+    int msgbox = MessageBoxA(NULL, msg, title, MB_OK);
+    if (msgbox == NULL) {
+
+        throw WinapiException("MessageBoxA", WinapiError::standartError);
     }
 }
-
-
-
 
 SOCKET waitForClient()
 {
@@ -150,52 +133,21 @@ void startServer()
 
 }
 
-int main()
-{
-    try
-    {
-        Mutex m = ensureOneOrogram();
-        RunOnStartUp();
+int main() {
+    try {
+        Mutex m = ensureOneProgram();
+        runOnStartUp();
         openMessageBox();
-    }
-    catch (WinapiError e)
-    {
-        switch (e)
-        {
-        case WinapiError::winapiError:
-            lastError = GetLastError();
-            break;
-        case WinapiError::wsaError:
-            lastError = WSAGetLastError();
-            break;
-        default:
-            break;
-        }
-
-        std::cout << "error number " << lastError << " in " << lastWinapiFunction <<"\n";    
-    }
-    catch (const std::exception& e)
-    {
+    } catch (WinapiException& e) {
+        std::cout << "error number " << e.getErrorno() << " in "
+                  << e.getLastFunc() << "\n";
+    } catch (const std::exception& e) {
         std::cout << "Unknown exception: " << e.what() << "\n";
-    }
-    catch (...)
-    {
+    } catch (...) {
         std::cout << "Unknown exception\n";
     }
-    if (wsaInitiated)
-    {
+    if (wsaInitiated) {
         WSACleanup();
-    }
-    if (addr)
-    {
-        freeaddrinfo(addr);
-    }
-    for (const SOCKET socket : sockets)
-    {
-        if (socket != INVALID_SOCKET)
-        {
-            closesocket(socket);
-        }
     }
 
 }

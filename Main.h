@@ -1,14 +1,31 @@
 #include <windows.h>
-#define DEFAULT_PORT "12345"
+constexpr char DEFAULT_PORT[]  = "12345";
+
+BOOL wsaInitiated = FALSE;
+
+#pragma once
+#include <exception>
 
 enum class WinapiError
 {
-    winapiError = 1,
+    standartError = 1,
     wsaError,
     otherError
 };
 
-const char* lastWinapiFunction = "";
-int lastError = 0;
+class WinapiException : public std::exception
+{
+  public:
+    WinapiException(const char* lastFunc, WinapiError error);
 
-BOOL wsaInitiated = FALSE;
+    WinapiException(const char* lastFunc, int errorno);
+
+    int getErrorno();
+
+    const char* getLastFunc();
+    
+  private:
+    const char* m_lastFunc;
+    int m_errorno;
+};
+
