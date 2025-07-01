@@ -17,15 +17,20 @@
 #define PROGRAM_NAME "Technai"
 #define PROGRAM_PATH "C:\\Users\\User\\source\\repos\\twin\\x64\\Debug\\twin.exe"
 
+#define DEFAULT_PORT "12345"
+
 enum WinapiError
 {
     winapiError,
+    wsaError,
     otherError
 };
 
 const char* lastWinapiFunction = "";
 std::vector<HANDLE> handles;
 int lastError = 0;
+
+BOOL wsaInitiated = FALSE;
 
 HANDLE ensureOneOrogram()
 {
@@ -115,6 +120,58 @@ void openMessageBox()
     }
 }
 
+void startServer()
+{
+    WSADATA wsaData;
+    int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != 0)
+    {
+        lastError = iResult;
+        lastWinapiFunction = "WSAStartup";
+        throw otherError;
+    }
+    wsaInitiated = TRUE;
+
+    struct addrinfo *result = NULL, *ptr = NULL, hints;
+
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_PASSIVE;
+
+    // Resolve the local address and port to be used by the server
+    iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
+    if (iResult != 0)
+    {
+        lastError = iResult;
+        lastWinapiFunction = "getaddrinfo";
+        throw otherError;
+    }
+
+    // Create a SOCKET for the server to listen for client connections
+    SOCKET ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (ListenSocket == INVALID_SOCKET)
+    {
+        freeaddrinfo(result);
+        lastWinapiFunction = "socket";
+        throw wsaError;
+    }
+
+    // Setup the TCP listening socket
+    iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
+    if (iResult == SOCKET_ERROR)
+    {
+        printf("bind failed with error: %d\n", WSAGetLastError());
+        freeaddrinfo(result);
+        closesocket(ListenSocket);
+        WSACleanup();
+        return 1;
+    }
+
+
+}
+
 int main()
 {
     HANDLE mutex = ensureOneOrogram();
@@ -127,10 +184,18 @@ int main()
     }
     catch (WinapiError e)
     {
-        if (e == winapiError)
+        switch (e)
         {
+        case winapiError:
             lastError = GetLastError();
+            break;
+        case wsaError:
+            lastError = WSAGetLastError();
+            break;
+        default:
+            break;
         }
+
         std::cout << "error number " << lastError << " in " << lastWinapiFunction <<"\n";    
     }
     if (mutex != NULL)
@@ -143,6 +208,10 @@ int main()
     for (HANDLE h : handles)
     {
         CloseHandle(h);
+    }
+    if (wsaInitiated)
+    {
+        WSACleanup();
     }
 
 }
