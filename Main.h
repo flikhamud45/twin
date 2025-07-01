@@ -1,10 +1,13 @@
+#pragma once
+#include <exception>
 #include <windows.h>
+
 constexpr char DEFAULT_PORT[]  = "12345";
 
 BOOL wsaInitiated = FALSE;
 
-#pragma once
-#include <exception>
+
+
 
 enum class WinapiError
 {

@@ -8,12 +8,12 @@ public:
 
     ~ClientSocket();
 
-    void recvall(const char* recvbuf, int recvbuflen);
+    void recvall(char* recvbuf, int recvbuflen);
 
     void send(const char* sendbuf, int len);
 
 private:
-    Socket sock;
+    Socket m_sock;
     
 };
 

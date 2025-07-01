@@ -115,5 +115,21 @@ ServerSocket::~ServerSocket()
     
 }
 
+ClientSocket::ClientSocket(SOCKET s) : m_sock(s) {
+    // blank
+}
+
+void ClientSocket::recvall(char* recvbuf, int recvbuflen) {
+    int iResult = recv(m_sock.getSocket(), recvbuf, recvbuflen, MSG_WAITALL);
+    if (iResult == recvbuflen) {
+        
+    }
+    else if (iResult < recvbuflen || iResult == SOCKET_ERROR) {
+        throw WinapiException("recv", WinapiError::wsaError);
+    }
+//TODO: finish this
+}
+
+
 
 
