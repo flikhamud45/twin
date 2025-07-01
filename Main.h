@@ -11,14 +11,6 @@
 
 
 
-
-
-
-BOOL wsaInitiated = FALSE;
-
-
-
-
 enum class WinapiErrorType
 {
     standardError = 1,

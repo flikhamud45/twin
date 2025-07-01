@@ -11,6 +11,7 @@ constexpr char DEFAULT_PORT[] = "12345";
 
 constexpr int MSG_SIZE_SIZE = 2;
 
+
 class Socket {
   public:
     Socket(SOCKET s);

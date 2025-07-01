@@ -7,7 +7,7 @@ Socket::Socket(SOCKET s) : m_socket(s) {
 Socket::~Socket() { closesocket(m_socket); }
 
 SOCKET Socket::getSocket() { return m_socket; }
-
+BOOL wsaInitiated = FALSE;
 
 void wsaInit()
 {

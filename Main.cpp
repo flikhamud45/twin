@@ -135,9 +135,9 @@ int main() {
     } catch (...) {
         std::cout << "Unknown exception\n";
     }
-    if (wsaInitiated) {
-        WSACleanup();
-    }
+    
+    WSACleanup();
+    
 
 }
 
