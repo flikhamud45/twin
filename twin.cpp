@@ -116,11 +116,23 @@ int main()
     }
     catch (WinapiError e)
     {
-        if (e == WinapiError::winapiError)
+        switch (e)
         {
+        case WinapiError::winapiError:
             lastError = GetLastError();
+            break;
+        default:
+            break;
         }
         std::cout << "error number " << lastError << " in " << lastWinapiFunction <<"\n";    
+    }
+    catch (const std::exception& e)
+    {
+        std::cout << "Unknown exception: " << e.what() << "\n";
+    }
+    catch (...)
+    {
+        std::cout << "Unknown exception\n";
     }
     
 
