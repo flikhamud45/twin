@@ -1,13 +1,7 @@
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-
 #include "Main.h"
-#include "Closers.h"
-#include <iphlpapi.h>
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include "Mutex.h"
+#include "Socket.h"
+
 #include <iostream>
 
 constexpr char MUTEX_NAME[] = "technai_mutex";
@@ -17,10 +11,13 @@ constexpr WCHAR PROGRAM_PATH[] = L"C:\\Users\\User\\source\\repos\\twin\\x64\\De
 constexpr char DEFAULT_MSG[] = "MANAGMENT PROGRAM IS UP";
 constexpr char DEFAULT_TITLE[] = "MANAGMENT PROGRAM";
 
+constexpr char ERROR_MSG[] = "Unknown Command";
+constexpr char PING_COMMAND[] = "ping";
+constexpr char PONG_COMMAND[] = "pong";
 
 WinapiException::WinapiException(const char* lastFunc, WinapiError error) : m_lastFunc(lastFunc) {
     switch (error) {
-    case WinapiError::standartError:
+    case WinapiError::standardError:
         m_errorno = GetLastError();
         break;
     case WinapiError::wsaError:
@@ -52,7 +49,7 @@ Mutex ensureOneProgram() {
     HANDLE mutex = CreateMutexA(NULL, TRUE, MUTEX_NAME);
 
     if (mutex == NULL) {
-        throw WinapiException("CreateMutexA", WinapiError::standartError);
+        throw WinapiException("CreateMutexA", WinapiError::standardError);
     }
 
     DWORD waitStatus = WaitForSingleObject(mutex, 0);
@@ -63,7 +60,7 @@ Mutex ensureOneProgram() {
         exit(1);
     } else if (waitStatus == waitStatus) {
         throw WinapiException("WaitForSingleObject",
-                              WinapiError::standartError);
+                              WinapiError::standardError);
     } else {
         std::cout << "Unknown error\n";
         exit(1);
@@ -95,40 +92,35 @@ void openMessageBox(const char* msg = DEFAULT_MSG,
     int msgbox = MessageBoxA(NULL, msg, title, MB_OK);
     if (msgbox == NULL) {
 
-        throw WinapiException("MessageBoxA", WinapiError::standartError);
+        throw WinapiException("MessageBoxA", WinapiError::standardError);
     }
 }
 
-SOCKET waitForClient()
-{
-    wsaInit();
-
-    AddrInfo result = getServerAddr();
-
-    SOCKET ListenSocket = createSocket(result.getAddr());
-
-    bindListenSocket(result.getAddr(), ListenSocket);
-
-    SOCKET ClientSocket = acceptClient(ListenSocket);
-
-    closesocket(ListenSocket);
-    ListenSocket = INVALID_SOCKET;
-    return ClientSocket;
-}
-
-
-void talkWithClient(const SOCKET& ClientSocket)
-{
-    
+void handleClient(ClientSocket client) {
+    try {
+        std::string msg = client.recvMsg();
+        switch (msg) {
+        case PING_COMMAND:
+            client.sendMsg(PONG_COMMAND);
+        default:
+            throw ClientException::invalidMsg;
+        }
+    }
+    catch (ClientException e) {
+        switch (e) {
+        case ClientException::invalidMsg:
+            client.sendMsg(ERROR_MSG);
+        }
+    }
 }
 
 void startServer()
 {
     
-    SOCKET ClientSocket = waitForClient();
-
-    talkWithClient(ClientSocket);
-
+    ServerSocket serverSock;
+    serverSock.bind();
+    serverSock.listen();
+    ClientSocket client = serverSock.accept();
 }
 
 int main() {

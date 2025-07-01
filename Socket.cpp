@@ -4,6 +4,15 @@
 #include <ws2tcpip.h>
 #include <winsock2.h>
 
+Socket::Socket(SOCKET s) : m_socket(s) {
+    // blank intentionally
+}
+
+Socket::~Socket() { closesocket(m_socket); }
+
+SOCKET Socket::getSocket() { return m_socket; }
+
+
 void wsaInit()
 {
     // init the wsa if needed
@@ -21,6 +30,7 @@ void wsaInit()
 
 PADDRINFOA getServerAddr(const char* port)
 {
+    wsaInit();
     // return a addrinfo of for the server
 
     struct addrinfo *result = NULL, *ptr = NULL, hints;
@@ -56,7 +66,7 @@ SOCKET createSocket(PADDRINFOA result)
 void bindSocket(PADDRINFOA result, const SOCKET& ListenSocket)
 {
     // bind a socket
-    int iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
+    int iResult = bind(ListenSocket, result->ai_addr, static_cast<int>(result->ai_addrlen));
     if (iResult == SOCKET_ERROR)
     {
         throw WinapiException("bind", WinapiError::wsaError);
@@ -86,13 +96,8 @@ SOCKET acceptClient(const SOCKET& ListenSocket)
     
 }
 
-ServerSocket::ServerSocket(const char* port)
-{
-    wsaInit();
-    AddrInfo result = getServerAddr(port);
-    m_addr = result;
-    m_ListenSocket = createSocket(result.getAddr());
-
+ServerSocket::ServerSocket(const char* port) : m_addr(getServerAddr(port)), m_ListenSocket(createSocket(m_addr.getAddr())) {
+    // blank
 }
 
 void ServerSocket::bind()
@@ -121,14 +126,54 @@ ClientSocket::ClientSocket(SOCKET s) : m_sock(s) {
 
 void ClientSocket::recvall(char* recvbuf, int recvbuflen) {
     int iResult = recv(m_sock.getSocket(), recvbuf, recvbuflen, MSG_WAITALL);
-    if (iResult == recvbuflen) {
-        
-    }
-    else if (iResult < recvbuflen || iResult == SOCKET_ERROR) {
+    if (iResult < recvbuflen || iResult == SOCKET_ERROR) {
         throw WinapiException("recv", WinapiError::wsaError);
     }
-//TODO: finish this
+
 }
+
+ClientSocket::~ClientSocket() {
+    // blank
+}
+
+auto _send = send;
+void ClientSocket::send(const char* sendbuf, int len) {
+    int iResult = _send(m_sock.getSocket(), sendbuf, len, 0);
+    if (iResult == SOCKET_ERROR) {
+        throw WinapiException("send", WinapiError::wsaError);
+    }
+}
+
+void ClientSocket::send(std::string s) {
+    send(s.c_str(), s.size());
+}
+
+std::string ClientSocket::recvMsg() {
+    char sizeBuff[MSG_SIZE_SIZE];
+    recvall(sizeBuff, MSG_SIZE_SIZE);
+    int size = atoi(sizeBuff);
+    char* msg = new char[size+1];
+    recvall(msg, size);
+    msg[size] = '\0';
+    std::string ans = msg;
+    delete[] msg;
+    return ans;
+}
+
+void ClientSocket::sendMsg(const char* sendbuf, int len) {
+    if (len > (1 << (MSG_SIZE_SIZE*8))) {
+        throw std::exception("Invalid message size!");
+    }
+    char sizeBuff[MSG_SIZE_SIZE];
+    send(sizeBuff, MSG_SIZE_SIZE);
+    send(sendbuf, len);
+}
+
+void ClientSocket::sendMsg(std::string s) {
+    sendMsg(s.c_str(), s.size());
+}
+
+
 
 
 
