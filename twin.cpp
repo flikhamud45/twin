@@ -13,8 +13,10 @@ enum WinapiError
     otherError
 };
 
+typedef int (*Closer)(HANDLE);
+
 const char* lastWinapiFunction = "";
-std::vector<HANDLE> handles;
+std::vector<std::pair<Closer, HANDLE>> handles;
 int lastError = 0;
 
 HANDLE ensureOneOrogram()
@@ -34,7 +36,7 @@ HANDLE ensureOneOrogram()
     DWORD waitStatus = WaitForSingleObject(mutex, 0);
     if (waitStatus == WAIT_OBJECT_0)
     {
-        handles.push_back(mutex);
+        handles.push_back(std::pair<Closer, HANDLE>(CloseHandle, mutex));
         return mutex;
     }
     else if (waitStatus == WAIT_ABANDONED || waitStatus == WAIT_TIMEOUT)
@@ -130,9 +132,12 @@ int main()
             std::cout << "error number " << GetLastError() << " in ReleaseMutex\n";    
         }
     }
-    for (HANDLE h : handles)
+    for (std::pair<Closer, HANDLE> p : handles)
     {
-        CloseHandle(h);
+        if (p.second != NULL)
+        {
+            p.first(p.second);
+        }
     }
 
 }
