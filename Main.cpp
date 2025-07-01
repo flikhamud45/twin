@@ -13,7 +13,7 @@ constexpr char DEFAULT_TITLE[] = "MANAGMENT PROGRAM";
 
 WinapiException::WinapiException(const char* lastFunc, WinapiErrorType error) : m_lastFunc(lastFunc) {
     switch (error) {
-    case WinapiErrorType::standartError:
+    case WinapiErrorType::standardError:
         m_errorno = GetLastError();
         break;
     default:
@@ -42,7 +42,7 @@ Mutex ensureOneProgram() {
     HANDLE mutex = CreateMutexA(NULL, TRUE, MUTEX_NAME);
 
     if (mutex == NULL) {
-        throw WinapiException("CreateMutexA", WinapiErrorType::standartError);
+        throw WinapiException("CreateMutexA", WinapiErrorType::standardError);
     }
 
     DWORD waitStatus = WaitForSingleObject(mutex, 0);
@@ -52,7 +52,7 @@ Mutex ensureOneProgram() {
         std::cout << "program is already running...\n";
         exit(1);
     } else if (waitStatus == WAIT_FAILED){
-        throw WinapiException("WaitForSingleObject", WinapiErrorType::standartError);
+        throw WinapiException("WaitForSingleObject", WinapiErrorType::standardError);
     } else {
         std::cout << "Unknown error\n";
         exit(1);
@@ -92,7 +92,7 @@ void openMessageBox(const char* msg = DEFAULT_MSG, const char* title = DEFAULT_T
     );
     if (msgbox == NULL) {
 
-        throw WinapiException("MessageBoxA", WinapiErrorType::standartError);
+        throw WinapiException("MessageBoxA", WinapiErrorType::standardError);
     }
 }
 

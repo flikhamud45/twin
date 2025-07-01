@@ -3,7 +3,7 @@
 
 enum class WinapiErrorType
 {
-    standartError = 1,
+    standardError = 1,
     otherError
 };
 
