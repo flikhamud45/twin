@@ -1,24 +1,26 @@
+#include "handlers.h"
 #include <iostream>
-#include <vector>
 #include <windows.h>
 
-#define MUTEX_NAME "technai_mutex"
-#define RUN_REG "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
-#define PROGRAM_NAME "Technai"
-#define PROGRAM_PATH "C:\\Users\\User\\source\\repos\\twin\\x64\\Debug\\twin.exe"
+constexpr char MUTEX_NAME[] = "technai_mutex";
+constexpr char RUN_REG[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+constexpr WCHAR PROGRAM_NAME[] = L"Technai";
+constexpr WCHAR PROGRAM_PATH[] = L"C:\\Users\\User\\source\\repos\\twin\\x64\\Debug\\twin.exe";
 
-enum WinapiError
+enum class WinapiError
 {
-    winapiError,
+    winapiError = 1,
     otherError
 };
 
+
+
 const char* lastWinapiFunction = "";
-std::vector<HANDLE> handles;
 int lastError = 0;
 
-HANDLE ensureOneOrogram()
+Mutex ensureOneOrogram()
 {
+    // ensure that there is only one program running and return a locked mutex.
     HANDLE mutex = CreateMutexA(
         NULL,
         TRUE,
@@ -32,24 +34,23 @@ HANDLE ensureOneOrogram()
     }
 
     DWORD waitStatus = WaitForSingleObject(mutex, 0);
-    if (waitStatus == WAIT_OBJECT_0)
+    if (waitStatus == WAIT_OBJECT_0 || waitStatus == WAIT_ABANDONED)
     {
-        handles.push_back(mutex);
         return mutex;
     }
-    else if (waitStatus == WAIT_ABANDONED || waitStatus == WAIT_TIMEOUT)
+    else if (waitStatus == WAIT_TIMEOUT)
     {
         std::cout << "program is already running...\n";
         exit(1);
     }
     else if (waitStatus == waitStatus)
     {
-        std::cout << "error number " << GetLastError() << " in WaitForSingleObject\n";
-        exit(1);
+        lastWinapiFunction = "WaitForSingleObject";
+        throw WinapiError::winapiError;
     }
     else
     {
-        std::cout << "Unkwon error\n";
+        std::cout << "Unknown error\n";
         exit(1);
     }
 
@@ -71,22 +72,22 @@ void RunOnStartUp()
     {
         lastWinapiFunction = "RegCreateKeyA";
         lastError = s;
-        throw otherError;
+        throw WinapiError::otherError;
     }
 
-    s = RegSetKeyValueA(
+    s = RegSetKeyValueW(
         hkey, 
         NULL,
         PROGRAM_NAME, 
         REG_SZ,
         PROGRAM_PATH, 
-        (DWORD)strlen(PROGRAM_PATH) + 1
+        static_cast<DWORD>(wcslen(PROGRAM_PATH)) + 1 // including the null terminator as needed according to the doc of the function
     );
     RegCloseKey(hkey);
     if (s != ERROR_SUCCESS)
     {
-        lastWinapiFunction = "RegCreateKeyA";
-        throw winapiError;
+        lastWinapiFunction = "RegSetKeyValueW";
+        throw WinapiError::winapiError;
     }
 }
 
@@ -101,39 +102,27 @@ void openMessageBox()
     if (! msgbox)
     {
         lastWinapiFunction = "MessageBoxA";
-        throw winapiError;
+        throw WinapiError::winapiError;
     }
 }
 
 int main()
 {
-    HANDLE mutex = ensureOneOrogram();
-    
-    
     try
     {
+        Mutex m = ensureOneOrogram();
         RunOnStartUp();
         openMessageBox();
     }
     catch (WinapiError e)
     {
-        if (e == winapiError)
+        if (e == WinapiError::winapiError)
         {
             lastError = GetLastError();
         }
         std::cout << "error number " << lastError << " in " << lastWinapiFunction <<"\n";    
     }
-    if (mutex != NULL)
-    {
-        if (!ReleaseMutex(mutex))
-        {
-            std::cout << "error number " << GetLastError() << " in ReleaseMutex\n";    
-        }
-    }
-    for (HANDLE h : handles)
-    {
-        CloseHandle(h);
-    }
+    
 
 }
 
