@@ -41,8 +41,7 @@ Mutex ensureOneProgram() {
     HANDLE mutex = CreateMutexA(NULL, TRUE, MUTEX_NAME);
 
     if (mutex == NULL) {
-        std::cout << "error number " << GetLastError() << " in CreateMutexA\n";
-        exit(1);
+        throw WinapiException("CreateMutexA", WinapiError::standartError);
     }
 
     DWORD waitStatus = WaitForSingleObject(mutex, 0);
