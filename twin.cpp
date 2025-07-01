@@ -9,11 +9,13 @@
 
 enum WinapiError
 {
-    winapiError
+    winapiError,
+    otherError
 };
 
 const char* lastWinapiFunction = "";
 std::vector<HANDLE> handles;
+int lastError = 0;
 
 HANDLE ensureOneOrogram()
 {
@@ -112,9 +114,13 @@ int main()
         RunOnStartUp();
         openMessageBox();
     }
-    catch (WinapiError)
+    catch (WinapiError e)
     {
-        std::cout << "error number " << GetLastError() << " in " << lastWinapiFunction <<"\n";    
+        if (e == winapiError)
+        {
+            lastError = GetLastError();
+        }
+        std::cout << "error number " << lastError << " in " << lastWinapiFunction <<"\n";    
     }
     if (mutex != NULL)
     {
