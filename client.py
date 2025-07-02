@@ -7,6 +7,7 @@ PORT = 12345
 
 class Command(Enum):
 	PING = "ping"
+	RUN = "run"
 
 def send_message(sock: socket.socket, message: str) -> None:
 	size = len(message)
@@ -44,8 +45,30 @@ def main() -> None:
 		except ValueError:
 			print(f"Unknown command: {command}")
 			continue
-		send_message(sock, command.value)
-		print(f"Sent command: {command.value}")
+		msg = ""
+		match command:
+			case Command.PING:
+				msg = Command.PING.value
+				send_message(sock, msg)
+			case Command.RUN:
+				path = input("Enter path to run: ").strip()
+				if not path:
+					print("Path cannot be empty")
+					continue
+				msg = f"{Command.RUN.value} {path}"
+				send_message(sock, msg)
+			case _:
+				print(f"Unknown command: {command}")
+				continue
+		print(f"Sent message: {msg}")
+		
+		msg = receive_message(sock)
+		print(f"Received message: {msg}")
+		
+
+				
+
+		
 		msg = receive_message(sock)
 		print(f"Received message: {msg}")
 
