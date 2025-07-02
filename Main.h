@@ -11,8 +11,7 @@
 
 
 
-enum class WinapiErrornoMethod
-{
+enum class WinapiErrornoMethod {
     // indicates the type of method to get the last error
     standardError = 1,
     wsaError
@@ -23,8 +22,7 @@ enum class ClientException {
     ClientDisconnected
 };
 
-class WinapiException : public std::exception
-{
+class WinapiException : public std::exception {
 
   public:
     // build an exception from the last func called that caused the exception
@@ -38,7 +36,7 @@ class WinapiException : public std::exception
     int getErrorno();
 
     const char* getLastFunc();
-    
+
   private:
     const char* m_lastFunc;
     int m_errorno;

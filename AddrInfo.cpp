@@ -12,7 +12,9 @@ AddrInfo::AddrInfo() : m_addr(NULL) {
 }
 
 
-PADDRINFOA AddrInfo::getAddr() { return m_addr; }
+PADDRINFOA AddrInfo::getAddr() {
+    return m_addr;
+}
 
 AddrInfo::~AddrInfo() {
     if (m_addr != NULL) {

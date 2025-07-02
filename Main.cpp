@@ -153,9 +153,8 @@ void handleClient(ClientSocket& client) {
     }
 }
 
-void startServer()
-{
-    
+void startServer() {
+
     ServerSocket serverSock;
     serverSock.bind();
     serverSock.listen();
@@ -163,7 +162,6 @@ void startServer()
         ClientSocket client = serverSock.accept();
         handleClient(client);
     }
-
 }
 
 int main() {
