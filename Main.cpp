@@ -121,6 +121,17 @@ std::pair<std::string, std::vector<std::string>> parseCommand(std::string msg) {
     return {command, splitted};
 }
 
+std::string join(const std::vector<std::string>& vec, const std::string& delimiter) {
+    std::string result;
+    for (size_t i = 0; i < vec.size(); ++i) {
+        result += vec[i];
+        if (i < vec.size() - 1) {
+            result += delimiter;
+        }
+    }
+    return result;
+}
+
 void runPath(std::string path) {
     STARTUPINFOA si;
     PROCESS_INFORMATION pi;
@@ -130,7 +141,7 @@ void runPath(std::string path) {
     ZeroMemory(&pi, sizeof(pi));
     char* cpath = new char[path.length() + 1];
     strcpy_s(cpath, path.length()+1, path.c_str());
-    BOOL suc = CreateProcessA(NULL,  // No module name (use command line)
+    BOOL suc = CreateProcessA(NULL,  // module name 
                    cpath, // Command line
                    NULL,  // Process handle not inheritable
                    NULL,  // Thread handle not inheritable
@@ -164,11 +175,11 @@ void handleMsg(ClientSocket& client, const std::string& msg) {
     if (command == PING_COMMAND) {
         client.sendMsg(PONG_COMMAND);
     } else if (command == RUN_COMMAND) {
-        if (args.size() != 1) {
+        if (args.size() < 1) {
             throw ClientException::invalidArgs;
         }
         try {
-            runPath(args[0]);
+            runPath(join(args, " "));
         }
         catch (WinapiException &e) {
             if (e.getErrorno() == 2) {
