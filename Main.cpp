@@ -1,7 +1,7 @@
 #include "Main.h"
 #include <vcruntime.h>
 #include <vector>
-#include <Msi.h>
+
 #include "Utils.h"
 
 #include <locale>
@@ -13,7 +13,6 @@
 constexpr int FILE_NOT_FOUND_ERRORNO = 2;
 constexpr char ERROR_MSG[] = "Unknown Command";
 constexpr char INVALID_ARGS_MSG[] = "Invalid Args";
-constexpr char INVALID_HASH_MSG[] = "Invalid Hash";
 constexpr char PING_COMMAND[] = "ping";
 constexpr char PONG_COMMAND[] = "pong";
 constexpr char RUN_COMMAND[] = "run";
@@ -144,8 +143,7 @@ void handleMsg(ClientSocket& client, const std::string& msg) {
         }
         client.sendMsg(OK_COMMAND);
     } else if (command == UPLOAD_COMMAND) {
-        std::string fileName = client.recvFile();
-        client.validateFileHash(fileName);
+        client.recvFile();
         client.sendMsg(OK_COMMAND);
     } else if (command == DOWNLOAD_COMMAND) {
         if (args.size() != 1) {
@@ -153,7 +151,6 @@ void handleMsg(ClientSocket& client, const std::string& msg) {
         }
         try {
             client.sendFile(args[0]);
-            client.sendHash(args[0]);
         }
         catch (WinapiException & e) {
             if (e.getErrorno() == FILE_NOT_FOUND_ERRORNO) {
@@ -164,7 +161,6 @@ void handleMsg(ClientSocket& client, const std::string& msg) {
         client.sendMsg(OK_COMMAND);
     } else if (command == UPDATE_COMMAND) {
         std::string fileName = client.recvFile();
-        client.validateFileHash(fileName);
         char absFileName[MAX_PATH];
         GetFullPathNameA(fileName.c_str(), MAX_PATH, absFileName, NULL);
         runOnStartUp(absFileName);
@@ -192,9 +188,6 @@ void handleClient(ClientSocket& client) {
                 break;
             case ClientException::invalidArgs:
                 client.sendMsg(INVALID_ARGS_MSG);
-                break;
-            case ClientException::hashDidNotMatch:
-                client.sendMsg(INVALID_HASH_MSG);
                 break;
             default:
                 break;

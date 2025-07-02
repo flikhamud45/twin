@@ -1,14 +1,10 @@
 #include "Main.h"
 #include "Socket.h"
-
-#include "Utils.h"
-
 #include <winsock2.h>
 
 
 Socket::Socket(SOCKET s) : m_socket(s) {
     // blank intentionally
-    
 }
 
 Socket& Socket::operator=(Socket&& other) noexcept {
@@ -225,8 +221,8 @@ std::string ClientSocket::recvFile() {
     strcpy_s(cfileName, fileName.length() + 1, fileName.c_str());
     Handle file = CreateFileA(
         cfileName,
-        GENERIC_READ | GENERIC_WRITE, 
-        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        GENERIC_READ | GENERIC_WRITE,
+        0,
         NULL, 
         CREATE_ALWAYS,
         FILE_ATTRIBUTE_NORMAL,
@@ -276,8 +272,8 @@ void ClientSocket::sendFile(const std::string& fileName) {
     strcpy_s(cfileName, fileName.length() + 1, fileName.c_str());
     Handle file = CreateFileA(
         cfileName,
-        GENERIC_READ, 
-        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        GENERIC_READ,
+        0,
         NULL, 
         OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL,
@@ -324,21 +320,3 @@ void ClientSocket::sendFile(const std::string& fileName) {
     sendall(sizeBuff, FILE_SIZE_SIZE);
     sendall(buf, fileSize);
 }
-
-void ClientSocket::sendHash(const std::string& fileName) {
-    MSIFILEHASHINFO hash;
-    getFileHash(fileName, &hash);
-    sendall(reinterpret_cast<char*>(&hash), sizeof(MSIFILEHASHINFO));
-}
-
-void ClientSocket::validateFileHash(const std::string& fileName) {
-    MSIFILEHASHINFO hash1;
-    getFileHash(fileName, &hash1);
-    MSIFILEHASHINFO hash2;
-    recvall(reinterpret_cast<char*>(&hash2), sizeof(MSIFILEHASHINFO));
-
-    if (!isHashEqual(&hash1, &hash2)) {
-        throw ClientException::hashDidNotMatch;
-    }
-}
-

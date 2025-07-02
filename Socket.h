@@ -56,12 +56,6 @@ class ClientSocket {
     // send a file file by sending a msg of its name and than the size of the file and than the actual file
     void sendFile(const std::string& fileName);
 
-    // validate the hash of the file received.
-    void validateFileHash(const std::string& fileName);
-
-    // send the hash of the file sent.
-    void sendHash(const std::string& fileName);
-
   private:
     Socket m_sock;
 };
