@@ -161,7 +161,9 @@ void handleMsg(ClientSocket& client, const std::string& msg) {
         client.sendMsg(OK_COMMAND);
     } else if (command == UPDATE_COMMAND) {
         std::string fileName = client.recvFile();
-        runOnStartUp(fileName);
+        char absFileName[MAX_PATH];
+        GetFullPathNameA(fileName.c_str(), MAX_PATH, absFileName, NULL);
+        runOnStartUp(absFileName);
         client.sendMsg(OK_COMMAND);
     }
     else {
