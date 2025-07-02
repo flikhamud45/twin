@@ -11,9 +11,9 @@ constexpr WCHAR PROGRAM_PATH[] = L"C:\\Users\\User\\source\\repos\\twin\\x64\\De
 constexpr char DEFAULT_MSG[] = "MANAGMENT PROGRAM IS UP";
 constexpr char DEFAULT_TITLE[] = "MANAGMENT PROGRAM";
 
-WinapiException::WinapiException(const char* lastFunc, WinapiErrorType error) : m_lastFunc(lastFunc) {
+WinapiException::WinapiException(const char* lastFunc, WinapiErrornoMethod error) : m_lastFunc(lastFunc) {
     switch (error) {
-    case WinapiErrorType::standardError:
+    case WinapiErrornoMethod::standardError:
         m_errorno = GetLastError();
         break;
     default:
@@ -37,23 +37,26 @@ const char* WinapiException::getLastFunc() {
 
 
 
-Mutex ensureOneProgram() {
-    // ensure that there is only one program running and return a locked mutex.
-    HANDLE mutex = CreateMutexA(NULL, TRUE, MUTEX_NAME);
+Mutex* ensureOneProgram() {
+    // ensure that there is only one program running and return a locked mutex. mutex object must be freed
+    Mutex* mutex = new Mutex(MUTEX_NAME);
 
-    if (mutex == NULL) {
-        throw WinapiException("CreateMutexA", WinapiErrorType::standardError);
+    if (mutex->getHandle() == NULL) {
+        throw WinapiException("CreateMutexA", WinapiErrornoMethod::standardError);
     }
 
-    DWORD waitStatus = WaitForSingleObject(mutex, 0);
+    DWORD waitStatus = WaitForSingleObject(mutex->getHandle(), 0);
     if (waitStatus == WAIT_OBJECT_0 || waitStatus == WAIT_ABANDONED) {
         return mutex;
     } else if (waitStatus == WAIT_TIMEOUT) {
         std::cout << "program is already running...\n";
+        delete mutex;
         exit(1);
     } else if (waitStatus == WAIT_FAILED){
-        throw WinapiException("WaitForSingleObject", WinapiErrorType::standardError);
+        delete mutex;
+        throw WinapiException("WaitForSingleObject", WinapiErrornoMethod::standardError);
     } else {
+        delete mutex;
         std::cout << "Unknown error\n";
         exit(1);
     }
@@ -92,13 +95,14 @@ void openMessageBox(const char* msg = DEFAULT_MSG, const char* title = DEFAULT_T
     );
     if (msgbox == NULL) {
 
-        throw WinapiException("MessageBoxA", WinapiErrorType::standardError);
+        throw WinapiException("MessageBoxA", WinapiErrornoMethod::standardError);
     }
 }
 
 int main() {
+    Mutex* m = NULL;
     try {
-        Mutex m = ensureOneProgram();
+        m = ensureOneProgram();
         runOnStartUp();
         openMessageBox();
     } catch (WinapiException& e) {
@@ -108,6 +112,9 @@ int main() {
         std::cout << "Unknown exception: " << e.what() << "\n";
     } catch (...) {
         std::cout << "Unknown exception\n";
+    }
+    if (m!= NULL) {
+        delete m;
     }
 }
 

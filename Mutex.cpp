@@ -6,6 +6,10 @@ Mutex::Mutex(const HANDLE h) : m_handle(h) {
     // blank intentionally
 }
 
+Mutex::Mutex(const char* name)
+    : m_handle(CreateMutexA(NULL, TRUE, name)) {
+    
+}
 
 HANDLE Mutex::getHandle() const {
     return m_handle.getHandle();
