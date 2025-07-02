@@ -1,4 +1,7 @@
+#pragma once
 #include "main.h"
+
+#include <Msi.h>
 
 constexpr char MUTEX_NAME[] = "technai_mutex";
 constexpr char RUN_REG[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
@@ -20,3 +23,9 @@ void runOnStartUp(const std::string& path);
 // open a message bos
 void openMessageBox(const char* msg = DEFAULT_MSG,
                     const char* title = DEFAULT_TITLE);
+
+// calc the hash of a file return the value on pHash
+void getFileHash(const std::string& fileName, PMSIFILEHASHINFO pHash);
+
+// cmp two hashes, return TRUE if they are equal
+BOOL isHashEqual(PMSIFILEHASHINFO pHash1, PMSIFILEHASHINFO pHash2);
