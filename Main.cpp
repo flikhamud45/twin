@@ -1,5 +1,5 @@
 #include "Main.h"
-
+#include <vcruntime.h>
 #include <vector>
 
 // Link with ws2_32.lib
@@ -16,9 +16,11 @@ constexpr char DEFAULT_TITLE[] = "MANAGMENT PROGRAM";
 
 
 constexpr char ERROR_MSG[] = "Unknown Command";
+constexpr char INVALID_ARGS_MSG[] = "Invalid Args";
 constexpr char PING_COMMAND[] = "ping";
 constexpr char PONG_COMMAND[] = "pong";
 constexpr char RUN_COMMAND[] = "run";
+constexpr char OK_COMMAND[] = "ok";
 
 constexpr DWORD SLEEP_TIME = 1 * 1000 * 60 * 60;
 
@@ -100,9 +102,19 @@ void openMessageBox(const char* msg = DEFAULT_MSG,
 
 std::pair<std::string, std::vector<std::string>> parseCommand(std::string msg) {
     std::vector<std::string> splitted;
-    while (msg.length()) {
-        splitted.push_back(msg.substr(0, msg.find(' ')));
-        msg.erase(0, splitted[splitted.size() - 1].length());
+    size_t pos = 0;
+    while ((pos = msg.find(' ')) != std::string::npos) {
+        std::string token = msg.substr(0, pos);
+        if (!token.empty()) {
+            splitted.push_back(token);
+        }
+        msg.erase(0, pos + 1);
+    }
+    if (!msg.empty()) {
+        splitted.push_back(msg);
+    }
+    if (splitted.empty()) {
+        throw ClientException::invalidMsg;
     }
     std::string command = splitted[0];
     splitted.erase(splitted.begin());
@@ -110,7 +122,38 @@ std::pair<std::string, std::vector<std::string>> parseCommand(std::string msg) {
 }
 
 void runPath(std::string path) {
+    STARTUPINFOA si;
+    PROCESS_INFORMATION pi;
     
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+    char* cpath = new char[path.length() + 1];
+    strcpy_s(cpath, path.length()+1, path.c_str());
+    BOOL suc = CreateProcessA(NULL,  // No module name (use command line)
+                   cpath, // Command line
+                   NULL,  // Process handle not inheritable
+                   NULL,  // Thread handle not inheritable
+                   FALSE, // Set handle inheritance to FALSE
+                   0,     // No creation flags
+                   NULL,  // Use parent's environment block
+                   NULL,  // Use parent's starting directory
+                   &si,   // Pointer to STARTUPINFO structure
+                   &pi    // Pointer to PROCESS_INFORMATION structure
+    );
+    delete[] cpath;
+    if (!suc) {
+        throw WinapiException("CreateProcess",
+                              WinapiErrornoMethod::standardError);
+    }
+    Handle hProcess(pi.hProcess);
+    Handle hThread(pi.hThread);
+
+    DWORD waitStatus = WaitForSingleObject(hProcess.getHandle(), INFINITE);
+    if (waitStatus != WAIT_OBJECT_0) {
+        throw WinapiException("WaitForSingleObject",
+                              WinapiErrornoMethod::standardError);
+    }
 }
 
 void handleMsg(ClientSocket& client, const std::string& msg) {
@@ -122,9 +165,18 @@ void handleMsg(ClientSocket& client, const std::string& msg) {
         client.sendMsg(PONG_COMMAND);
     } else if (command == RUN_COMMAND) {
         if (args.size() != 1) {
-            throw ClientException::invalidMsg;
+            throw ClientException::invalidArgs;
         }
-        runPath(args[0]);
+        try {
+            runPath(args[0]);
+        }
+        catch (WinapiException &e) {
+            if (e.getErrorno() == 2) {
+                throw ClientException::invalidArgs;
+            }
+            throw e;
+        }
+        client.sendMsg(OK_COMMAND);
     }
     else {
         throw ClientException::invalidMsg;
@@ -146,11 +198,15 @@ void handleClient(ClientSocket& client) {
             case ClientException::ClientDisconnected:
                 client_connected = FALSE;
                 break;
+            case ClientException::invalidArgs:
+                client.sendMsg(INVALID_ARGS_MSG);
+                break;
             default:
                 break;
             }
         }
     }
+    
 }
 
 void startServer() {

@@ -64,14 +64,6 @@ def main() -> None:
 		
 		msg = receive_message(sock)
 		print(f"Received message: {msg}")
-		
-
-				
-
-		
-		msg = receive_message(sock)
-		print(f"Received message: {msg}")
-
 
 
 

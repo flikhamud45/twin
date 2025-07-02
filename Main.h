@@ -19,7 +19,8 @@ enum class WinapiErrornoMethod {
 
 enum class ClientException {
     invalidMsg,
-    ClientDisconnected
+    ClientDisconnected,
+    invalidArgs
 };
 
 class WinapiException : public std::exception {
