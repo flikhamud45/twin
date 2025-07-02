@@ -9,11 +9,11 @@ class Handle
     Handle();
 
     Handle(const Handle& h) = delete;
-    Handle(Handle&& h) noexcept;
+    Handle(Handle&& h);
 
 
-    Handle& operator=(Handle&& h) noexcept;
-    Handle& operator=(const Handle& h) noexcept = delete;
+    Handle& operator=(Handle&& h);
+    Handle& operator=(const Handle& h) = delete;
 
     virtual ~Handle();
 
