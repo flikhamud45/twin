@@ -7,6 +7,7 @@ class Mutex {
   public:
     Mutex(const HANDLE h);
     Mutex();
+    Mutex(const char* name);
 
     HANDLE getHandle() const;
 

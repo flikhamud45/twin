@@ -12,6 +12,7 @@ constexpr char DEFAULT_MSG[] = "MANAGMENT PROGRAM IS UP";
 constexpr char DEFAULT_TITLE[] = "MANAGMENT PROGRAM";
 
 
+
 constexpr char ERROR_MSG[] = "Unknown Command";
 constexpr char PING_COMMAND[] = "ping";
 constexpr char PONG_COMMAND[] = "pong";
@@ -45,23 +46,26 @@ const char* WinapiException::getLastFunc() {
 
 
 
-Mutex ensureOneProgram() {
-    // ensure that there is only one program running and return a locked mutex.
-    HANDLE mutex = CreateMutexA(NULL, TRUE, MUTEX_NAME);
+Mutex* ensureOneProgram() {
+    // ensure that there is only one program running and return a locked mutex. mutex object must be freed
+    Mutex* mutex = new Mutex(MUTEX_NAME);
 
-    if (mutex == NULL) {
+    if (mutex->getHandle() == NULL) {
         throw WinapiException("CreateMutexA", WinapiErrornoMethod::standardError);
     }
 
-    DWORD waitStatus = WaitForSingleObject(mutex, 0);
+    DWORD waitStatus = WaitForSingleObject(mutex->getHandle(), 0);
     if (waitStatus == WAIT_OBJECT_0 || waitStatus == WAIT_ABANDONED) {
         return mutex;
     } else if (waitStatus == WAIT_TIMEOUT) {
         std::cout << "program is already running...\n";
+        delete mutex;
         exit(1);
     } else if (waitStatus == WAIT_FAILED){
+        delete mutex;
         throw WinapiException("WaitForSingleObject", WinapiErrornoMethod::standardError);
     } else {
+        delete mutex;
         std::cout << "Unknown error\n";
         exit(1);
     }
@@ -137,8 +141,9 @@ void startServer()
 }
 
 int main() {
+    Mutex* m = NULL;
     try {
-        Mutex m = ensureOneProgram();
+        m = ensureOneProgram();
         runOnStartUp();
         openMessageBox();
         startServer();
@@ -150,9 +155,9 @@ int main() {
     } catch (...) {
         std::cout << "Unknown exception\n";
     }
-    
     WSACleanup();
-    
-
+    if (m != NULL) {
+        delete m;
+    }
 }
 
