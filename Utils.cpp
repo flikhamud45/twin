@@ -29,7 +29,7 @@ void runOnStartUp(const std::wstring& path) {
         throw WinapiException("RegCreateKeyA", status);
     }
     WCHAR* cpath = new WCHAR[path.length()+1];
-    wcscpy(cpath, path.c_str());
+    wcscpy_s(cpath, path.length()+1, path.c_str());
     status = RegSetKeyValueW(
         hkey, NULL, PROGRAM_NAME, REG_SZ, cpath,
                         static_cast<DWORD>(wcslen(cpath)) * sizeof(wchar_t) +

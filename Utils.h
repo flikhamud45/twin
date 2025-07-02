@@ -13,7 +13,7 @@ constexpr char DEFAULT_TITLE[] = "MANAGMENT PROGRAM";
 Mutex ensureOneProgram();
 
 // make the program run on startup
-void runOnStartUp(const std::wstring path = PROGRAM_PATH);
+void runOnStartUp(const std::wstring& path = PROGRAM_PATH);
 
 // open a message bos
 void openMessageBox(const char* msg = DEFAULT_MSG,
