@@ -10,8 +10,7 @@ Handle::Handle() : m_handle(NULL) {
     // blank
 }
 
-
-Handle::Handle(Handle&& h) noexcept : m_handle(h.m_handle){
+Handle::Handle(Handle&& h) : m_handle(h.m_handle) {
     h.m_handle = NULL;
 }
 
@@ -25,7 +24,7 @@ HANDLE Handle::getHandle() const {
     return m_handle;
 }
 
-Handle& Handle::operator=(Handle&& h) noexcept {
+Handle& Handle::operator=(Handle&& h) {
     m_handle = h.m_handle;
     h.m_handle = NULL;
     return *this;

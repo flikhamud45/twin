@@ -22,12 +22,12 @@ Mutex::Mutex(const char* name)
 }
 
 
-Mutex::Mutex(Mutex&& m) noexcept : m_handle(getHandle()) {
+Mutex::Mutex(Mutex&& m) : m_handle(getHandle()) {
     m.m_handle.setHandle(NULL);
 }
 
 
-Mutex& Mutex::operator=(Mutex&& other) noexcept {
+Mutex& Mutex::operator=(Mutex&& other) {
     m_handle = std::move(other.m_handle);
     return *this;
 }
