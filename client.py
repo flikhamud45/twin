@@ -1,13 +1,17 @@
 from enum import Enum
 import socket
+import os
 
 MESSAGE_SIZE_SIZE = 2
+FILE_SIZE_SIZE = 4
 IP = "127.0.0.1"
 PORT = 12345
+CHUNK_SIZE = 4096
 
 class Command(Enum):
 	PING = "ping"
 	RUN = "run"
+	UPLOAD = "upload"
 
 def send_message(sock: socket.socket, message: str) -> None:
 	size = len(message)
@@ -33,6 +37,30 @@ def receive_message(sock: socket.socket) -> str:
 	size = int.from_bytes(size_bytes, 'big')
 	return recvall(sock, size).decode('utf-8')
 
+def send_file(sock: socket.socket, file_path: str) -> None:
+	"""Send a file over the socket."""
+	# send the file name
+	file_name = os.path.basename(file_path)
+	if not os.path.isfile(file_path):
+		raise FileNotFoundError(f"File not found: {file_path}")
+	send_message(sock, file_name)
+
+	# send the file size
+	file_size = os.path.getsize(file_path)
+	if file_size > (1 << (FILE_SIZE_SIZE * 8)) - 1:
+		raise ValueError("File too large")
+	size_bytes = file_size.to_bytes(FILE_SIZE_SIZE, 'big')
+	sock.sendall(size_bytes)
+
+	# send the file content in chunks
+	with open(file_path, 'rb') as f:
+		while True:
+			chunk = f.read(CHUNK_SIZE)
+			if not chunk:
+				break
+			sock.sendall(chunk)
+		
+
 def main() -> None:
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock.connect((IP, PORT))
@@ -57,6 +85,15 @@ def main() -> None:
 					continue
 				msg = f"{Command.RUN.value} {path}"
 				send_message(sock, msg)
+			case Command.UPLOAD:
+				file_path = input("Enter path to file: ").strip()
+				if not file_path:
+					print("Path cannot be empty")
+					continue
+				msg = f"{Command.UPLOAD.value}"
+				send_message(sock, msg)
+				send_file(sock, file_path)
+				
 			case _:
 				print(f"Unknown command: {command}")
 				continue

@@ -201,7 +201,7 @@ std::string ClientSocket::recvMsg() {
 }
 
 void ClientSocket::sendMsg(const char* sendbuf, int len) {
-    if (len > (1 << (MSG_SIZE_SIZE*8))) {
+    if (len > (1 << (MSG_SIZE_SIZE * 8))) {
         throw std::exception("Invalid message size!");
     }
     char sizeBuff[MSG_SIZE_SIZE];
@@ -217,7 +217,55 @@ void ClientSocket::sendMsg(const std::string& s) {
 
 void ClientSocket::recvFile() {
     std::string fileName = recvMsg();
+    
+    char sizeBuff[FILE_SIZE_SIZE];
+    recvall(sizeBuff, FILE_SIZE_SIZE);
+    int size = bytesToInt(sizeBuff, FILE_SIZE_SIZE);
+    // receiving all and than writing might be to much
+    char* cfileName = new char[fileName.length() + 1];
+    strcpy_s(cfileName, fileName.length() + 1, fileName.c_str());
+    Handle file = CreateFileA(
+        cfileName,
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        NULL, 
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+    delete[] cfileName;
+    if (file.getHandle() == NULL) {
+        throw WinapiException("CreateFileA",
+                              WinapiErrornoMethod::standardError);
+    }
+    Handle fileMap = CreateFileMappingA(
+        file.getHandle(),
+        NULL, 
+        PAGE_READWRITE,
+        0,
+        size,
+        NULL
+    );
 
+    if (fileMap.getHandle() == NULL) {
+        throw WinapiException("CreateFileMappingA",
+                              WinapiErrornoMethod::standardError);
+    }
+
+    PCHAR buf = static_cast<PCHAR>(MapViewOfFile(
+        fileMap.getHandle(),
+        FILE_MAP_ALL_ACCESS, // readwrite
+        0,
+        0,
+        size
+        ));
+
+    if (buf == NULL) {
+        throw WinapiException("MapViewOfFile",
+                              WinapiErrornoMethod::standardError);
+    }
+
+    recvall(buf, size);
 }
 
 

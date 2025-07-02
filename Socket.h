@@ -10,6 +10,7 @@ constexpr char DEFAULT_PORT[] = "12345";
 
 
 constexpr int MSG_SIZE_SIZE = 2;
+constexpr int FILE_SIZE_SIZE = 4;
 
 
 class Socket {

