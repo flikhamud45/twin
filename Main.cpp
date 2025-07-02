@@ -16,12 +16,12 @@ constexpr char ERROR_MSG[] = "Unknown Command";
 constexpr char PING_COMMAND[] = "ping";
 constexpr char PONG_COMMAND[] = "pong";
 
-WinapiException::WinapiException(const char* lastFunc, WinapiErrorType error) : m_lastFunc(lastFunc) {
+WinapiException::WinapiException(const char* lastFunc, WinapiErrornoMethod error) : m_lastFunc(lastFunc) {
     switch (error) {
-    case WinapiErrorType::standardError:
+    case WinapiErrornoMethod::standardError:
         m_errorno = GetLastError();
         break;
-    case WinapiErrorType::wsaError:
+    case WinapiErrornoMethod::wsaError:
         m_errorno = WSAGetLastError();
         break;
     default:
@@ -50,7 +50,7 @@ Mutex ensureOneProgram() {
     HANDLE mutex = CreateMutexA(NULL, TRUE, MUTEX_NAME);
 
     if (mutex == NULL) {
-        throw WinapiException("CreateMutexA", WinapiErrorType::standardError);
+        throw WinapiException("CreateMutexA", WinapiErrornoMethod::standardError);
     }
 
     DWORD waitStatus = WaitForSingleObject(mutex, 0);
@@ -60,7 +60,7 @@ Mutex ensureOneProgram() {
         std::cout << "program is already running...\n";
         exit(1);
     } else if (waitStatus == WAIT_FAILED){
-        throw WinapiException("WaitForSingleObject", WinapiErrorType::standardError);
+        throw WinapiException("WaitForSingleObject", WinapiErrornoMethod::standardError);
     } else {
         std::cout << "Unknown error\n";
         exit(1);
@@ -92,7 +92,7 @@ void openMessageBox(const char* msg = DEFAULT_MSG,
     int msgbox = MessageBoxA(NULL, msg, title, MB_OK);
     if (msgbox == NULL) {
 
-        throw WinapiException("MessageBoxA", WinapiErrorType::standardError);
+        throw WinapiException("MessageBoxA", WinapiErrornoMethod::standardError);
     }
 }
 

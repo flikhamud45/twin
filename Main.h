@@ -11,7 +11,7 @@
 
 
 
-enum class WinapiErrorType
+enum class WinapiErrornoMethod
 {
     standardError = 1,
     wsaError
@@ -26,7 +26,7 @@ class WinapiException : public std::exception
 {
 
   public:
-    WinapiException(const char* lastFunc, WinapiErrorType error);
+    WinapiException(const char* lastFunc, WinapiErrornoMethod error);
 
     WinapiException(const char* lastFunc, int errorno);
 

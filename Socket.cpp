@@ -71,7 +71,7 @@ SOCKET createSocket(PADDRINFOA result)
     SOCKET ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (ListenSocket == INVALID_SOCKET)
     {
-        throw WinapiException("socket", WinapiErrorType::wsaError);
+        throw WinapiException("socket", WinapiErrornoMethod::wsaError);
     }
     return ListenSocket;
 }
@@ -82,7 +82,7 @@ void bindSocket(PADDRINFOA result, const SOCKET& ListenSocket)
     int iResult = bind(ListenSocket, result->ai_addr, static_cast<int>(result->ai_addrlen));
     if (iResult == SOCKET_ERROR)
     {
-        throw WinapiException("bind", WinapiErrorType::wsaError);
+        throw WinapiException("bind", WinapiErrornoMethod::wsaError);
     }
 }
 
@@ -93,7 +93,7 @@ void listenSocket(const SOCKET& ListenSocket)
 
     if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR)
     {
-        throw WinapiException("listen", WinapiErrorType::wsaError);
+        throw WinapiException("listen", WinapiErrornoMethod::wsaError);
     }
 }
 
@@ -103,7 +103,7 @@ SOCKET acceptClient(const SOCKET& ListenSocket)
     SOCKET ClientSocket = accept(ListenSocket, NULL, NULL);
     if (ClientSocket == INVALID_SOCKET)
     {
-        throw WinapiException("accept", WinapiErrorType::wsaError);
+        throw WinapiException("accept", WinapiErrornoMethod::wsaError);
     }
     return ClientSocket;
     
@@ -141,7 +141,7 @@ ClientSocket::ClientSocket(SOCKET s) : m_sock(s) {
 void ClientSocket::recvall(char* recvbuf, int recvbuflen) {
     int iResult = recv(m_sock.getSocket(), recvbuf, recvbuflen, MSG_WAITALL);
     if (iResult == SOCKET_ERROR) {
-        auto exc = WinapiException("recv", WinapiErrorType::wsaError);
+        auto exc = WinapiException("recv", WinapiErrornoMethod::wsaError);
         if (exc.getErrorno() == WSAECONNRESET) {
             throw ClientException::ClientDisconnected;
         } else {
@@ -163,7 +163,7 @@ void ClientSocket::sendall(const char* sendbuf, int len) {
     while (len > 0) {
         int iResult = send(m_sock.getSocket(), sendbuf, len, 0);
         if (iResult == SOCKET_ERROR) {
-            auto exc = WinapiException("send", WinapiErrorType::wsaError);
+            auto exc = WinapiException("send", WinapiErrornoMethod::wsaError);
             if (exc.getErrorno() == WSAECONNRESET) {
                 throw ClientException::ClientDisconnected;
             } else {
