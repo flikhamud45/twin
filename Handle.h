@@ -6,11 +6,11 @@ class Handle
     // class that store a handle and handle destructor
   public:
     Handle(HANDLE h);
-    Handle(const Handle& h);
+    Handle();
 
     Handle& operator=(Handle&& h) noexcept;
 
-    ~Handle();
+    virtual ~Handle();
 
     HANDLE getHandle() const;
 
