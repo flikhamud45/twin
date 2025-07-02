@@ -1,5 +1,7 @@
 #include "Main.h"
 
+#include <vector>
+
 // Link with ws2_32.lib
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -16,6 +18,7 @@ constexpr char DEFAULT_TITLE[] = "MANAGMENT PROGRAM";
 constexpr char ERROR_MSG[] = "Unknown Command";
 constexpr char PING_COMMAND[] = "ping";
 constexpr char PONG_COMMAND[] = "pong";
+constexpr char RUN_COMMAND[] = "run";
 
 WinapiException::WinapiException(const char* lastFunc, WinapiErrornoMethod error) : m_lastFunc(lastFunc) {
     switch (error) {
@@ -100,10 +103,34 @@ void openMessageBox(const char* msg = DEFAULT_MSG,
     }
 }
 
+std::pair<std::string, std::vector<std::string>> parseCommand(std::string msg) {
+    std::vector<std::string> splitted;
+    while (msg.length()) {
+        splitted.push_back(msg.substr(0, msg.find(' ')));
+        msg.erase(0, splitted[splitted.size() - 1].length());
+    }
+    std::string command = splitted[0];
+    splitted.erase(splitted.begin());
+    return {command, splitted};
+}
+
+void runPath(std::string path) {
+    
+}
+
 void handleMsg(ClientSocket& client, const std::string& msg) {
     openMessageBox(msg.c_str());
-    if (msg == PING_COMMAND)
+    auto p = parseCommand(msg);
+    std::string command = p.first;
+    auto args = p.second;
+    if (command == PING_COMMAND) {
         client.sendMsg(PONG_COMMAND);
+    } else if (command == RUN_COMMAND) {
+        if (args.size() != 1) {
+            throw ClientException::invalidMsg;
+        }
+        runPath(args[0]);
+    }
     else {
         throw ClientException::invalidMsg;
     }
