@@ -81,10 +81,15 @@ void runOnStartUp() {
         throw WinapiException("RegCreateKeyA", status);
     }
 
-    status = RegSetKeyValueW(hkey, NULL, PROGRAM_NAME, REG_SZ, PROGRAM_PATH,
-                             static_cast<DWORD>(wcslen(PROGRAM_PATH)) +
-                                 1 // including the null terminator as needed
-                                   // according to the doc of the function
+    status = RegSetKeyValueW(
+        hkey,
+        NULL,
+        PROGRAM_NAME, 
+        REG_SZ, 
+        PROGRAM_PATH,
+                        static_cast<DWORD>(wcslen(PROGRAM_PATH)) * sizeof(wchar_t) +
+                            1 // including the null terminator as needed
+                              // according to the doc of the function
     );
     RegCloseKey(hkey);
     if (status != ERROR_SUCCESS) {
