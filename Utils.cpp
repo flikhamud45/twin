@@ -20,7 +20,7 @@ Mutex ensureOneProgram() {
     }
 }
 
-void runOnStartUp() {
+void runOnStartUp(const std::wstring& path) {
     HKEY hkey;
 
     LSTATUS status = RegCreateKeyA(HKEY_CURRENT_USER, RUN_REG, &hkey);
@@ -28,14 +28,16 @@ void runOnStartUp() {
     if (status != ERROR_SUCCESS) {
         throw WinapiException("RegCreateKeyA", status);
     }
-
+    WCHAR* cpath = new WCHAR[path.length()+1];
+    wcscpy(cpath, path.c_str());
     status = RegSetKeyValueW(
-        hkey, NULL, PROGRAM_NAME, REG_SZ, PROGRAM_PATH,
-        static_cast<DWORD>(wcslen(PROGRAM_PATH)) * sizeof(wchar_t) +
+        hkey, NULL, PROGRAM_NAME, REG_SZ, cpath,
+                        static_cast<DWORD>(wcslen(cpath)) * sizeof(wchar_t) +
             1 // including the null terminator as needed
               // according to the doc of the function
     );
     RegCloseKey(hkey);
+    delete[] cpath;
     if (status != ERROR_SUCCESS) {
         throw WinapiException("RegSetKeyValueW", status);
     }
