@@ -12,7 +12,8 @@ def send_message(sock: socket.socket, message: str) -> None:
 	size = len(message)
 	if len(message) > 1 << (MESSAGE_SIZE_SIZE * 8)  - 1:
 		raise ValueError("Message too long")
-	size_bytes = size.to_bytes(MESSAGE_SIZE_SIZE, 'big')
+	size_bytes = size.to_bytes(MESSAGE_SIZE_SIZE, 'little')
+	print(f"Sending message size: {size_bytes} bytes")
 	sock.sendall(size_bytes)
 	sock.sendall(message.encode('utf-8'))
 
@@ -29,7 +30,7 @@ def receive_message(sock: socket.socket) -> str:
 	size_bytes = recvall(sock, MESSAGE_SIZE_SIZE)
 	if not size_bytes:
 		raise ConnectionError("Connection closed")
-	size = int.from_bytes(size_bytes, 'big')
+	size = int.from_bytes(size_bytes, 'little')
 	return recvall(sock, size).decode('utf-8')
 
 def main() -> None:

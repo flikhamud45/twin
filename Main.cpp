@@ -1,16 +1,9 @@
 #include "Main.h"
 
+#include "Utils.h"
+
 // Link with ws2_32.lib
 #pragma comment(lib, "Ws2_32.lib")
-
-
-
-constexpr char MUTEX_NAME[] = "technai_mutex";
-constexpr char RUN_REG[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
-constexpr WCHAR PROGRAM_NAME[] = L"Technai";
-constexpr WCHAR PROGRAM_PATH[] = L"C:\\Users\\User\\source\\repos\\twin\\x64\\Debug\\twin.exe";
-constexpr char DEFAULT_MSG[] = "MANAGMENT PROGRAM IS UP";
-constexpr char DEFAULT_TITLE[] = "MANAGMENT PROGRAM";
 
 
 constexpr char ERROR_MSG[] = "Unknown Command";
@@ -49,56 +42,6 @@ const char* WinapiException::getLastFunc() {
 
 
 
-Mutex ensureOneProgram() {
-    // ensure that there is only one program running and return a locked mutex. mutex object must be freed
-    Mutex mutex(MUTEX_NAME);
-
-    DWORD waitStatus = WaitForSingleObject(mutex.getHandle(), 0);
-    if (waitStatus == WAIT_OBJECT_0 || waitStatus == WAIT_ABANDONED) {
-        return mutex;
-    } else if (waitStatus == WAIT_TIMEOUT) {
-        std::cout << "program is already running...\n";
-        exit(1);
-    } else if (waitStatus == WAIT_FAILED){
-        throw WinapiException("WaitForSingleObject", WinapiErrornoMethod::standardError);
-    } else {
-        std::cout << "Unknown error\n";
-        exit(1);
-    }
-}
-
-void runOnStartUp() {
-    HKEY hkey;
-
-    LSTATUS status = RegCreateKeyA(HKEY_CURRENT_USER, RUN_REG, &hkey);
-
-    if (status != ERROR_SUCCESS) {
-        throw WinapiException("RegCreateKeyA", status);
-    }
-
-    status = RegSetKeyValueW(
-        hkey,
-        NULL,
-        PROGRAM_NAME, 
-        REG_SZ, 
-        PROGRAM_PATH,
-                        static_cast<DWORD>(wcslen(PROGRAM_PATH)) * sizeof(wchar_t) +
-                            1 // including the null terminator as needed
-                              // according to the doc of the function
-    );
-    RegCloseKey(hkey);
-    if (status != ERROR_SUCCESS) {
-        throw WinapiException("RegSetKeyValueW", status);
-    }
-}
-
-void openMessageBox(const char* msg = DEFAULT_MSG,
-                    const char* title = DEFAULT_TITLE) {
-    int msgbox = MessageBoxA(NULL, msg, title, MB_OK);
-    if (msgbox == NULL) {
-        throw WinapiException("MessageBoxA", WinapiErrornoMethod::standardError);
-    }
-}
 
 void handleClient(ClientSocket& client) {
     BOOL client_connected = TRUE;
