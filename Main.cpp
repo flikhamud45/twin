@@ -100,7 +100,7 @@ void openMessageBox(const char* msg = DEFAULT_MSG,
     }
 }
 
-void handleMsg(ClientSocket& client, std::string& msg) {
+void handleMsg(ClientSocket& client, const std::string& msg) {
     openMessageBox(msg.c_str());
     if (msg == PING_COMMAND)
         client.sendMsg(PONG_COMMAND);
