@@ -71,7 +71,7 @@ def receive_file(sock: socket.socket) -> str:
 		raise ValueError(INVALID_ARGS_MSG)
 	# receive the file size
 	size_bytes = recvall(sock, FILE_SIZE_SIZE)
-	file_size = int.from_bytes(size_bytes, 'big')
+	file_size = int.from_bytes(size_bytes, 'little')
 
 	# receive the file content in chunks
 	with open(file_name, 'wb') as f:
