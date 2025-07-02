@@ -23,26 +23,24 @@ Socket::Socket() : m_socket(NULL) {
 }
 
 
-SOCKET Socket::getSocket() { return m_socket; }
+SOCKET Socket::getSocket() {
+    return m_socket;
+}
 BOOL wsaInitiated = FALSE;
 
-void wsaInit()
-{
+void wsaInit() {
     // init the wsa if needed
-    if (!wsaInitiated)
-    {
+    if (!wsaInitiated) {
         WSADATA wsaData;
         int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-        if (iResult != 0)
-        {
+        if (iResult != 0) {
             throw WinapiException("WSAStartup", iResult);
         }
         wsaInitiated = TRUE;
     }
 }
 
-PADDRINFOA getServerAddr(const char* port)
-{
+PADDRINFOA getServerAddr(const char* port) {
     wsaInit();
     // return a addrinfo of for the server
 
@@ -56,57 +54,50 @@ PADDRINFOA getServerAddr(const char* port)
 
     // Resolve the local address and port to be used by the server
     int iResult = getaddrinfo(NULL, port, &hints, &result);
-    if (iResult != 0)
-    {
+    if (iResult != 0) {
         throw WinapiException("getaddrinfo", iResult);
     }
     return result;
 }
 
-SOCKET createSocket(PADDRINFOA result)
-{
+SOCKET createSocket(PADDRINFOA result) {
     // create a socket
 
     // Create a SOCKET for the server to listen for client connections
-    SOCKET ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (ListenSocket == INVALID_SOCKET)
-    {
+    SOCKET ListenSocket =
+        socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (ListenSocket == INVALID_SOCKET) {
         throw WinapiException("socket", WinapiErrornoMethod::wsaError);
     }
     return ListenSocket;
 }
 
-void bindSocket(PADDRINFOA result, const SOCKET& ListenSocket)
-{
+void bindSocket(PADDRINFOA result, const SOCKET& ListenSocket) {
     // bind a socket
-    int iResult = bind(ListenSocket, result->ai_addr, static_cast<int>(result->ai_addrlen));
-    if (iResult == SOCKET_ERROR)
-    {
+    int iResult = bind(ListenSocket, result->ai_addr,
+                       static_cast<int>(result->ai_addrlen));
+    if (iResult == SOCKET_ERROR) {
         throw WinapiException("bind", WinapiErrornoMethod::wsaError);
     }
 }
 
 
-void listenSocket(const SOCKET& ListenSocket)
-{
+void listenSocket(const SOCKET& ListenSocket) {
     // listen on a socket (no blocking)
 
-    if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR)
-    {
+    if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR) {
         throw WinapiException("listen", WinapiErrornoMethod::wsaError);
     }
 }
 
 
-SOCKET acceptClient(const SOCKET& ListenSocket)
-{
+SOCKET acceptClient(const SOCKET& ListenSocket) {
+    // wait for a client to connect and return its socket
     SOCKET ClientSocket = accept(ListenSocket, NULL, NULL);
-    if (ClientSocket == INVALID_SOCKET)
-    {
+    if (ClientSocket == INVALID_SOCKET) {
         throw WinapiException("accept", WinapiErrornoMethod::wsaError);
     }
     return ClientSocket;
-    
 }
 
 ServerSocket::ServerSocket(const char* port) : m_addr(getServerAddr(port))  {
@@ -114,24 +105,21 @@ ServerSocket::ServerSocket(const char* port) : m_addr(getServerAddr(port))  {
     // blank
 }
 
-void ServerSocket::bind()
-{
+void ServerSocket::bind() {
     bindSocket(m_addr.getAddr(), m_ListenSocket.getSocket());
 }
 
-void ServerSocket::listen()
-{
+void ServerSocket::listen() {
     listenSocket(m_ListenSocket.getSocket());
 }
 
-SOCKET ServerSocket::accept()
-{
+SOCKET ServerSocket::accept() {
     return acceptClient(m_ListenSocket.getSocket());
 }
 
 ServerSocket::~ServerSocket()
 {
-    
+    // blank
 }
 
 ClientSocket::ClientSocket(SOCKET s) : m_sock(s) {

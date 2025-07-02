@@ -14,7 +14,6 @@ constexpr int MSG_SIZE_SIZE = 2;
 
 class Socket {
   public:
-
     Socket();
 
     Socket(SOCKET s);
@@ -29,9 +28,8 @@ class Socket {
     SOCKET m_socket;
 };
 
-class ClientSocket
-{
-public:
+class ClientSocket {
+  public:
     ClientSocket(SOCKET s);
 
     ~ClientSocket();
@@ -50,15 +48,12 @@ public:
     void sendMsg(const char* sendbuf, int len);
     void sendMsg(const std::string& s);
 
-
-private:
+  private:
     Socket m_sock;
-    
 };
 
-class ServerSocket
-{
-public:
+class ServerSocket {
+  public:
     ServerSocket(const char* port = DEFAULT_PORT);
 
     ~ServerSocket();
@@ -69,8 +64,8 @@ public:
 
     SOCKET accept();
 
-private:
+  private:
     Socket m_ListenSocket;
-  AddrInfo m_addr;
+    AddrInfo m_addr;
 };
 
