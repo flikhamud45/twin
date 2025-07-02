@@ -18,7 +18,8 @@ enum class WinapiErrorType
 };
 
 enum class ClientException {
-    invalidMsg
+    invalidMsg,
+    ClientDisconnected
 };
 
 class WinapiException : public std::exception

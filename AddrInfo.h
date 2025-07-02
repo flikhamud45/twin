@@ -8,6 +8,7 @@
 class AddrInfo {
   public:
     AddrInfo(PADDRINFOA addr);
+    AddrInfo();
 
     ~AddrInfo();
 

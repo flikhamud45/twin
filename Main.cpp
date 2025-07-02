@@ -96,19 +96,29 @@ void openMessageBox(const char* msg = DEFAULT_MSG,
     }
 }
 
-void handleClient(ClientSocket client) {
-    try {
-        std::string msg = client.recvMsg();
-        if (msg ==PING_COMMAND)
-            client.sendMsg(PONG_COMMAND);
-        else{
-            throw ClientException::invalidMsg;
+void handleClient(ClientSocket& client) {
+    BOOL client_connected = TRUE;
+    while (client_connected) {
+        try {
+            std::string msg = client.recvMsg();
+            openMessageBox(msg.c_str());
+            if (msg ==PING_COMMAND)
+                client.sendMsg(PONG_COMMAND);
+            else{
+                throw ClientException::invalidMsg;
+            }
         }
-    }
-    catch (ClientException e) {
-        switch (e) {
-        case ClientException::invalidMsg:
-            client.sendMsg(ERROR_MSG);
+        catch (ClientException e) {
+            switch (e) {
+            case ClientException::invalidMsg:
+                client.sendMsg(ERROR_MSG);
+                break;
+            case ClientException::ClientDisconnected:
+                client_connected = FALSE;
+                break;
+            default:
+                break;
+            }
         }
     }
 }
@@ -119,7 +129,11 @@ void startServer()
     ServerSocket serverSock;
     serverSock.bind();
     serverSock.listen();
-    ClientSocket client = serverSock.accept();
+    while (TRUE) {
+        ClientSocket client = serverSock.accept();
+        handleClient(client);
+    }
+
 }
 
 int main() {
@@ -127,6 +141,7 @@ int main() {
         Mutex m = ensureOneProgram();
         runOnStartUp();
         openMessageBox();
+        startServer();
     } catch (WinapiException& e) {
         std::cout << "error number " << e.getErrorno() << " in "
                   << e.getLastFunc() << "\n";

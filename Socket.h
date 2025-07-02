@@ -14,7 +14,12 @@ constexpr int MSG_SIZE_SIZE = 2;
 
 class Socket {
   public:
+
+    Socket();
+
     Socket(SOCKET s);
+
+    Socket& operator=(Socket&& other) noexcept;
 
     ~Socket();
 
@@ -35,8 +40,8 @@ public:
     void recvall(char* recvbuf, int recvbuflen);
 
     // send len bytes from the given buffer
-    void send(const char* sendbuf, int len);
-    void send(std::string s);
+    void sendall(const char* sendbuf, int len);
+    void sendall(std::string s);
 
     // recv a msg - recv size and than the actual message.
     std::string recvMsg();
@@ -62,7 +67,7 @@ public:
 
     void listen();
 
-    ClientSocket accept();
+    SOCKET accept();
 
 private:
     Socket m_ListenSocket;

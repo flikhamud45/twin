@@ -7,6 +7,7 @@ class Handle
   public:
     Handle(HANDLE h);
     Handle(const Handle& h);
+    Handle();
 
     Handle& operator=(Handle&& h) noexcept;
 

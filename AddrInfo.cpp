@@ -7,8 +7,15 @@ AddrInfo::AddrInfo(PADDRINFOA addr) : m_addr(addr) {
     // blank intentionally
 }
 
+AddrInfo::AddrInfo() : m_addr(NULL) {
+    // blank
+}
+
+
 PADDRINFOA AddrInfo::getAddr() { return m_addr; }
 
 AddrInfo::~AddrInfo() {
-    freeaddrinfo(m_addr);
+    if (m_addr != NULL) {
+        freeaddrinfo(m_addr);
+    }
 }
