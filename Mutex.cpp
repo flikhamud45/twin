@@ -1,3 +1,4 @@
+#include "Main.h"
 #include "Mutex.h"
 
 
@@ -13,11 +14,16 @@ Mutex::Mutex() : m_handle(NULL) {
 
 Mutex::Mutex(const char* name)
     : m_handle(CreateMutexA(NULL, TRUE, name)) {
+    if (m_handle.getHandle() == NULL) {
+        throw WinapiException("CreateMutexA",
+                              WinapiErrornoMethod::standardError);
+    }
     
 }
 
-Mutex::Mutex(const Mutex& mutex) {
-    m_handle = mutex.m_handle.getHandle();
+
+Mutex::Mutex(Mutex&& m) noexcept : m_handle(getHandle()) {
+    m.m_handle.setHandle(NULL);
 }
 
 
@@ -33,8 +39,8 @@ HANDLE Mutex::getHandle() {
 
 
 Mutex::~Mutex() {
-    if (m_handle.getHandle() != NULL) {
-        if (!ReleaseMutex(m_handle.getHandle())) {
+    if (getHandle() != NULL) {
+        if (!ReleaseMutex(getHandle())) {
             std::cout << "error number " << GetLastError()
                       << " in ReleaseMutex\n";
         }
