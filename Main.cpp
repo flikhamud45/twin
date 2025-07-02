@@ -148,7 +148,8 @@ int main() {
         //openMessageBox();
         startServer();
     } catch (WinapiException& e) {
-        std::cout << "error number " << e.getErrorno() << " in "
+        std::
+            << "error number " << e.getErrorno() << " in "
                   << e.getLastFunc() << "\n";
     } catch (const std::exception& e) {
         std::cout << "Unknown exception: " << e.what() << "\n";

@@ -16,13 +16,18 @@ Mutex::Mutex(const char* name)
     
 }
 
+Mutex::Mutex(const Mutex& mutex) {
+    m_handle = mutex.m_handle.getHandle();
+}
+
+
 Mutex& Mutex::operator=(Mutex&& other) noexcept {
-    m_handle = other.m_handle;
+    m_handle = std::move(other.m_handle);
     return *this;
 }
 
 
-HANDLE Mutex::getHandle() const {
+HANDLE Mutex::getHandle() {
     return m_handle.getHandle();
 }
 

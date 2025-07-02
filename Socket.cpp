@@ -7,14 +7,12 @@ Socket::Socket(SOCKET s) : m_socket(s) {
 }
 
 Socket& Socket::operator=(Socket&& other) noexcept {
-    std::cout << "move!\n";
     m_socket = other.getSocket();
     other.m_socket = NULL;
     return *this;
 }
 
 Socket::~Socket() {
-    std::cout << "destruct socket\n";
     if (m_socket != NULL) {
         closesocket(m_socket);
     }
