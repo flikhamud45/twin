@@ -6,11 +6,14 @@ class Mutex {
     // class that store a mutex and handle destructor
   public:
     Mutex(HANDLE h);
-    Mutex(const Mutex& mutex);
+    Mutex(const Mutex& mutex) = delete;
     Mutex();
     Mutex(const char* name);
+    Mutex(Mutex&& m) noexcept;
+
 
     Mutex& operator=(Mutex&& other) noexcept;
+    Mutex& operator=(const Mutex& other) = delete;
 
     HANDLE getHandle();
 

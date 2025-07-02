@@ -3,15 +3,19 @@
 
 enum class WinapiErrornoMethod
 {
+    // indicates the type of method to get the last error
     standardError = 1, // GetLastError
-    otherError 
 };
 
 class WinapiException : public std::exception
 {
   public:
+    // build an exception from the last func called that caused the exception
+    // and the method to get the error number
     WinapiException(const char* lastFunc, WinapiErrornoMethod error);
 
+    // build an exception from the last func called that caused the exception
+    // and the actual error number
     WinapiException(const char* lastFunc, int errorno);
 
     int getErrorno();

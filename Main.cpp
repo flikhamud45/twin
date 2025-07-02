@@ -4,12 +4,15 @@
 #include <iostream>
 #include <windows.h>
 
+
 constexpr char MUTEX_NAME[] = "technai_mutex";
 constexpr char RUN_REG[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 constexpr WCHAR PROGRAM_NAME[] = L"Technai";
 constexpr WCHAR PROGRAM_PATH[] = L"C:\\Users\\User\\source\\repos\\twin\\x64\\Debug\\twin.exe";
 constexpr char DEFAULT_MSG[] = "MANAGMENT PROGRAM IS UP";
 constexpr char DEFAULT_TITLE[] = "MANAGMENT PROGRAM";
+
+constexpr DWORD SLEEP_TIME = 1 * 1000 * 60 * 60;
 
 WinapiException::WinapiException(const char* lastFunc, WinapiErrornoMethod error) : m_lastFunc(lastFunc) {
     switch (error) {
@@ -37,26 +40,19 @@ const char* WinapiException::getLastFunc() {
 
 
 
-Mutex* ensureOneProgram() {
+Mutex ensureOneProgram() {
     // ensure that there is only one program running and return a locked mutex. mutex object must be freed
-    Mutex* mutex = new Mutex(MUTEX_NAME);
+    Mutex mutex(MUTEX_NAME);
 
-    if (mutex->getHandle() == NULL) {
-        throw WinapiException("CreateMutexA", WinapiErrornoMethod::standardError);
-    }
-
-    DWORD waitStatus = WaitForSingleObject(mutex->getHandle(), 0);
+    DWORD waitStatus = WaitForSingleObject(mutex.getHandle(), 0);
     if (waitStatus == WAIT_OBJECT_0 || waitStatus == WAIT_ABANDONED) {
         return mutex;
     } else if (waitStatus == WAIT_TIMEOUT) {
         std::cout << "program is already running...\n";
-        delete mutex;
         exit(1);
     } else if (waitStatus == WAIT_FAILED){
-        delete mutex;
         throw WinapiException("WaitForSingleObject", WinapiErrornoMethod::standardError);
     } else {
-        delete mutex;
         std::cout << "Unknown error\n";
         exit(1);
     }
@@ -94,17 +90,16 @@ void openMessageBox(const char* msg = DEFAULT_MSG, const char* title = DEFAULT_T
         MB_OK
     );
     if (msgbox == NULL) {
-
         throw WinapiException("MessageBoxA", WinapiErrornoMethod::standardError);
     }
 }
 
 int main() {
-    Mutex* m = NULL;
     try {
-        m = ensureOneProgram();
+        Mutex mutex = ensureOneProgram();
         runOnStartUp();
         openMessageBox();
+        Sleep(SLEEP_TIME);
     } catch (WinapiException& e) {
         std::cout << "error number " << e.getErrorno() << " in "
                   << e.getLastFunc() << "\n";
@@ -113,8 +108,6 @@ int main() {
     } catch (...) {
         std::cout << "Unknown exception\n";
     }
-    if (m!= NULL) {
-        delete m;
-    }
+    
 }
 
