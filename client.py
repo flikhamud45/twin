@@ -50,7 +50,7 @@ def send_file(sock: socket.socket, file_path: str) -> None:
 	file_size = os.path.getsize(file_path)
 	if file_size > (1 << (FILE_SIZE_SIZE * 8)) - 1:
 		raise ValueError("File too large")
-	size_bytes = file_size.to_bytes(FILE_SIZE_SIZE, 'big')
+	size_bytes = file_size.to_bytes(FILE_SIZE_SIZE, 'little')
 	sock.sendall(size_bytes)
 
 	# send the file content in chunks
