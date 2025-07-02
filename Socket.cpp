@@ -179,7 +179,7 @@ void ClientSocket::sendall(const char* sendbuf, int len) {
     
 }
 
-void ClientSocket::sendall(std::string s) {
+void ClientSocket::sendall(std::string& s) {
     sendall(s.c_str(), static_cast<int>(s.size()));
 }
 
@@ -222,7 +222,7 @@ void ClientSocket::sendMsg(const char* sendbuf, int len) {
     sendall(sendbuf, len);
 }
 
-void ClientSocket::sendMsg(std::string s) {
+void ClientSocket::sendMsg(std::string& s) {
     sendMsg(s.c_str(), static_cast<int>(s.size()));
 }
 

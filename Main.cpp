@@ -100,17 +100,21 @@ void openMessageBox(const char* msg = DEFAULT_MSG,
     }
 }
 
+void handleMsg(ClientSocket& client, std::string& msg) {
+    openMessageBox(msg.c_str());
+    if (msg == PING_COMMAND)
+        client.sendMsg(PONG_COMMAND);
+    else {
+        throw ClientException::invalidMsg;
+    }
+}
+
 void handleClient(ClientSocket& client) {
     BOOL client_connected = TRUE;
     while (client_connected) {
         try {
             std::string msg = client.recvMsg();
-            openMessageBox(msg.c_str());
-            if (msg ==PING_COMMAND)
-                client.sendMsg(PONG_COMMAND);
-            else{
-                throw ClientException::invalidMsg;
-            }
+            handleMsg(client, msg);
         }
         catch (ClientException e) {
             switch (e) {
@@ -148,8 +152,7 @@ int main() {
         //openMessageBox();
         startServer();
     } catch (WinapiException& e) {
-        std::
-            << "error number " << e.getErrorno() << " in "
+        std::cout << "error number " << e.getErrorno() << " in "
                   << e.getLastFunc() << "\n";
     } catch (const std::exception& e) {
         std::cout << "Unknown exception: " << e.what() << "\n";
