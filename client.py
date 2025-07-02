@@ -44,7 +44,7 @@ def send_file(sock: socket.socket, file_path: str) -> None:
 	# send the file name
 	file_name = os.path.basename(file_path)
 	if not os.path.isfile(file_path):
-		raise FileNotFoundError(f"File not found: {file_path}")
+		raise ValueError(f"File not found: {file_path}")
 	send_message(sock, file_name)
 
 	# send the file size
@@ -97,41 +97,44 @@ def main() -> None:
 			print(f"Unknown command: {command}")
 			continue
 		msg = ""
-		match command:
-			case Command.PING:
-				msg = Command.PING.value
-				send_message(sock, msg)
-			case Command.RUN:
-				path = input("Enter path to run: ").strip()
-				if not path:
-					print("Path cannot be empty")
+		try:
+			match command:
+				case Command.PING:
+					msg = Command.PING.value
+					send_message(sock, msg)
+				case Command.RUN:
+					path = input("Enter path to run: ").strip()
+					if not path:
+						print("Path cannot be empty")
+						continue
+					msg = f"{Command.RUN.value} {path}"
+					send_message(sock, msg)
+				case Command.UPLOAD:
+					file_path = input("Enter path to file: ").strip()
+					if not file_path:
+						print("Path cannot be empty")
+						continue
+					msg = f"{Command.UPLOAD.value}"
+					send_message(sock, msg)
+					send_file(sock, file_path)
+				case Command.DOWNLOAD:
+					file_name = input("Enter name of file to download: ").strip()
+					if not file_name:
+						print("File name cannot be empty")
+						continue
+					msg = f"{Command.DOWNLOAD.value} {file_name}"
+					send_message(sock, msg)
+					received_file = receive_file(sock)
+					print(f"Received file: {received_file}")
+				case _:
+					print(f"Unknown command: {command}")
 					continue
-				msg = f"{Command.RUN.value} {path}"
-				send_message(sock, msg)
-			case Command.UPLOAD:
-				file_path = input("Enter path to file: ").strip()
-				if not file_path:
-					print("Path cannot be empty")
-					continue
-				msg = f"{Command.UPLOAD.value}"
-				send_message(sock, msg)
-				send_file(sock, file_path)
-			case Command.DOWNLOAD:
-				file_name = input("Enter name of file to download: ").strip()
-				if not file_name:
-					print("File name cannot be empty")
-					continue
-				msg = f"{Command.DOWNLOAD.value} {file_name}"
-				send_message(sock, msg)
-				received_file = receive_file(sock)
-				print(f"Received file: {received_file}")
-			case _:
-				print(f"Unknown command: {command}")
-				continue
-		print(f"Sent message: {msg}")
-		
-		msg = receive_message(sock)
-		print(f"Received message: {msg}")
+			print(f"Sent message: {msg}")
+			
+			msg = receive_message(sock)
+			print(f"Received message: {msg}")
+		except ValueError as e:
+			print(f"Error: {e}")
 
 
 

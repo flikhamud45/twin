@@ -234,7 +234,7 @@ void ClientSocket::recvFile() {
         NULL
     );
     delete[] cfileName;
-    if (file.getHandle() == NULL) {
+    if (file.getHandle() == INVALID_HANDLE_VALUE) {
         throw WinapiException("CreateFileA",
                               WinapiErrornoMethod::standardError);
     }
