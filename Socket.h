@@ -41,14 +41,14 @@ public:
 
     // send len bytes from the given buffer
     void sendall(const char* sendbuf, int len);
-    void sendall(std::string& s);
+    void sendall(const std::string& s);
 
     // recv a msg - recv size and than the actual message.
     std::string recvMsg();
 
     // send a msg - send size and than the actual message
     void sendMsg(const char* sendbuf, int len);
-    void sendMsg(std::string& s);
+    void sendMsg(const std::string& s);
 
 
 private:
