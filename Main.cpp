@@ -14,6 +14,7 @@ constexpr WCHAR PROGRAM_PATH[] = L"C:\\Users\\User\\source\\repos\\twin\\x64\\De
 constexpr char DEFAULT_MSG[] = "MANAGMENT PROGRAM IS UP";
 constexpr char DEFAULT_TITLE[] = "MANAGMENT PROGRAM";
 
+constexpr int FILE_NOT_FOUND_ERRORNO = 2;
 
 constexpr char ERROR_MSG[] = "Unknown Command";
 constexpr char INVALID_ARGS_MSG[] = "Invalid Args";

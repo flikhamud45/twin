@@ -269,5 +269,60 @@ void ClientSocket::recvFile() {
 }
 
 
+void ClientSocket::sendFile(const std::string& fileName) {
+    
+    char* cfileName = new char[fileName.length() + 1];
+    strcpy_s(cfileName, fileName.length() + 1, fileName.c_str());
+    Handle file = CreateFileA(
+        cfileName,
+        GENERIC_READ,
+        0,
+        NULL, 
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+    delete[] cfileName;
+    if (file.getHandle() == INVALID_HANDLE_VALUE) {
+        throw WinapiException("CreateFileA",
+                              WinapiErrornoMethod::standardError);
+    }
+
+    DWORD fileSize = GetFileSize(file.getHandle(), NULL);
+    
+
+    Handle fileMap = CreateFileMappingA(
+        file.getHandle(),
+        NULL, 
+        PAGE_READONLY,
+        0,
+        fileSize,
+        NULL
+    );
+
+    if (fileMap.getHandle() == NULL) {
+        throw WinapiException("CreateFileMappingA",
+                              WinapiErrornoMethod::standardError);
+    }
+
+    PCHAR buf = static_cast<PCHAR>(MapViewOfFile(
+        fileMap.getHandle(),
+        FILE_MAP_READ, 
+        0,
+        0,
+        fileSize
+        ));
+    if (buf == NULL) {
+        throw WinapiException("MapViewOfFile",
+                              WinapiErrornoMethod::standardError);
+    }
+
+    sendMsg(fileName.substr(fileName.find_last_of('\\') + 1));
+    char sizeBuff[FILE_SIZE_SIZE];
+    intToBytes(fileSize, sizeBuff, FILE_SIZE_SIZE);
+    sendall(sizeBuff, FILE_SIZE_SIZE);
+    sendall(buf, fileSize);
+    
+}
 
 

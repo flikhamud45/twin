@@ -52,6 +52,9 @@ class ClientSocket {
     // recieve a file bye rceiving a msg of its name and than the size of the file and than the actual size
     void recvFile();
 
+    // send a file file by sending a msg of its name and than the size of the file and than the actual file
+    void sendFile(const std::string& fileName);
+
   private:
     Socket m_sock;
 };

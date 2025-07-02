@@ -7,6 +7,7 @@ FILE_SIZE_SIZE = 4
 IP = "127.0.0.1"
 PORT = 12345
 CHUNK_SIZE = 4096
+INVALID_ARGS_MSG = "Invalid Args"
 
 class Command(Enum):
 	PING = "ping"
@@ -65,7 +66,8 @@ def receive_file(sock: socket.socket) -> str:
 	"""Receive a file over the socket."""
 	# receive the file name
 	file_name = receive_message(sock)
-
+	if file_name == INVALID_ARGS_MSG:
+		raise ValueError(INVALID_ARGS_MSG)
 	# receive the file size
 	size_bytes = recvall(sock, FILE_SIZE_SIZE)
 	file_size = int.from_bytes(size_bytes, 'big')
