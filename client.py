@@ -1,6 +1,8 @@
 from enum import Enum
 import socket
 import os
+import ctypes
+import ctypes.wintypes as wintypes
 
 MESSAGE_SIZE_SIZE = 2
 FILE_SIZE_SIZE = 4
@@ -62,6 +64,7 @@ def send_file(sock: socket.socket, file_path: str) -> None:
 			if not chunk:
 				break
 			sock.sendall(chunk)
+	send_hash(sock, file_path)
 		
 def receive_file(sock: socket.socket) -> str:
 	"""Receive a file over the socket."""
@@ -82,8 +85,44 @@ def receive_file(sock: socket.socket) -> str:
 				raise ConnectionError("Connection closed")
 			f.write(chunk)
 			received_size += len(chunk)
-	
+	validate_file_hash(sock, file_name)
 	return file_name
+
+class MSIFILEHASHINFO(ctypes.Structure):
+	"""Structure to hold MSI file hash information. 
+	this the same as:
+	typedef struct _MSIFILEHASHINFO {
+		ULONG dwFileHashInfoSize;
+		ULONG dwData [ 4 ];
+	} MSIFILEHASHINFO;"""
+	_fields_ = [
+		("dwFileHashInfoSize", wintypes.ULONG),
+		("dwData", wintypes.ULONG * 4)
+	]
+
+def get_file_msi_hash(file_path: str) -> bytes:
+	"""Get the msi hash of a file."""
+	if not os.path.isfile(file_path):
+		raise ValueError(f"File not found: {file_path}")
+	hfi = MSIFILEHASHINFO()
+	hfi.dwFileHashInfoSize = ctypes.sizeof(MSIFILEHASHINFO)
+	if not ctypes.windll.msi.MsiGetFileHashW(file_path, ctypes.byref(hfi), ctypes.sizeof(hfi)):
+		raise ValueError(f"Failed to get file hash for {file_path}")
+	return bytes(hfi)
+
+
+def send_hash(sock: socket.socket, file_path: str) -> None:
+	"""Send the msi hash of a file."""
+	hash_bytes = get_file_msi_hash(file_path)
+	sock.sendall(hash_bytes)
+
+def validate_file_hash(sock: socket.socket, file_path: str) -> None:
+	"""Validate the msi hash of a file received from the server."""
+	expected_hash = get_file_msi_hash(file_path)
+	received_hash = recvall(sock, ctypes.sizeof(MSIFILEHASHINFO))
+	if received_hash != expected_hash:
+		raise ValueError("File hash did not match")
+
 
 def main() -> None:
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

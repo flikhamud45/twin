@@ -1,5 +1,7 @@
 #include "main.h"
 #include "Utils.h"
+#include <Msi.h>
+#pragma comment(lib, "msi.lib")
 
 Mutex ensureOneProgram() {
     // ensure that there is only one program running and return a locked mutex.
@@ -73,4 +75,20 @@ void openMessageBox(const char* msg, const char* title) {
         throw WinapiException("MessageBoxA",
                               WinapiErrornoMethod::standardError);
     }
+}
+
+void getFileHash(const std::string& fileName, PMSIFILEHASHINFO pHash) {
+    memset(pHash, 0, sizeof(MSIFILEHASHINFO));
+    pHash->dwFileHashInfoSize = sizeof(MSIFILEHASHINFO);
+    char* cfileName = new char[fileName.length() + 1];
+    strcpy_s(cfileName, fileName.length() + 1, fileName.c_str());
+    UINT retCode = MsiGetFileHashA(cfileName, 0, pHash);
+    if (retCode != ERROR_SUCCESS) {
+        throw WinapiException("MsiGetFileHashA", retCode);
+    }
+
+}
+
+BOOL isHashEqual(PMSIFILEHASHINFO pHash1, PMSIFILEHASHINFO pHash2) {
+    return memcmp(pHash1, pHash2, sizeof(MSIFILEHASHINFO)) == 0;
 }
