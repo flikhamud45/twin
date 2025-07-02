@@ -14,7 +14,6 @@ def send_message(sock: socket.socket, message: str) -> None:
 	if len(message) > 1 << (MESSAGE_SIZE_SIZE * 8)  - 1:
 		raise ValueError("Message too long")
 	size_bytes = size.to_bytes(MESSAGE_SIZE_SIZE, 'little')
-	print(f"Sending message size: {size_bytes} bytes")
 	sock.sendall(size_bytes)
 	sock.sendall(message.encode('utf-8'))
 
