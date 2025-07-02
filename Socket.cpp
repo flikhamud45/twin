@@ -2,6 +2,7 @@
 #include "Socket.h"
 #include <winsock2.h>
 
+
 Socket::Socket(SOCKET s) : m_socket(s) {
     // blank intentionally
 }
@@ -26,17 +27,17 @@ Socket::Socket() : m_socket(NULL) {
 SOCKET Socket::getSocket() {
     return m_socket;
 }
-BOOL wsaInitiated = FALSE;
+extern BOOL g_wsaInitiated = FALSE;
 
 void wsaInit() {
     // init the wsa if needed
-    if (!wsaInitiated) {
+    if (!g_wsaInitiated) {
         WSADATA wsaData;
         int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
         if (iResult != 0) {
             throw WinapiException("WSAStartup", iResult);
         }
-        wsaInitiated = TRUE;
+        g_wsaInitiated = TRUE;
     }
 }
 
@@ -117,10 +118,6 @@ SOCKET ServerSocket::accept() {
     return acceptClient(m_ListenSocket.getSocket());
 }
 
-ServerSocket::~ServerSocket()
-{
-    // blank
-}
 
 ClientSocket::ClientSocket(SOCKET s) : m_sock(s) {
     // blank
@@ -172,23 +169,19 @@ void ClientSocket::sendall(const std::string& s) {
 }
 
 int bytesToInt(const char* buff, int len) {
-    // convert a byte array to an integer (big-endian)
+    // convert a byte array to an integer (little-endian)
     int ans = 0;
-    for (int i = 0; i < len; ++i) {
-        ans = (ans << 8) | (unsigned char)buff[i];
-    }
+    memcpy(&ans, buff, len);
     return ans;
 }
 
 void intToBytes(int value, char* buff, int len) {
-    // convert an integer to a byte array (big-endian)
-    for (int i = len - 1; i >= 0; --i) {
-        buff[i] = (value & 0xFF);
-        value >>= 8;
-    }
+    // convert an integer to a byte array (little-endian)
+    memcpy(buff, &value, len);
 }
 
 std::string ClientSocket::recvMsg() {
+    // recv a msg - recv size and than the actual message.
     char sizeBuff[MSG_SIZE_SIZE];
     recvall(sizeBuff, MSG_SIZE_SIZE);
     int size = bytesToInt(sizeBuff, MSG_SIZE_SIZE);
@@ -201,7 +194,8 @@ std::string ClientSocket::recvMsg() {
 }
 
 void ClientSocket::sendMsg(const char* sendbuf, int len) {
-    if (len > (1 << (MSG_SIZE_SIZE * 8))) {
+    // send a msg - send size and than the actual message
+    if (len > (1 << (MSG_SIZE_SIZE*8))) {
         throw std::exception("Invalid message size!");
     }
     char sizeBuff[MSG_SIZE_SIZE];
@@ -211,6 +205,7 @@ void ClientSocket::sendMsg(const char* sendbuf, int len) {
 }
 
 void ClientSocket::sendMsg(const std::string& s) {
+    // send a msg - send size and than the actual message
     sendMsg(s.c_str(), static_cast<int>(s.size()));
 }
 
@@ -269,6 +264,7 @@ void ClientSocket::recvFile() {
 }
 
 
+
 void ClientSocket::sendFile(const std::string& fileName) {
     
     char* cfileName = new char[fileName.length() + 1];
@@ -324,5 +320,3 @@ void ClientSocket::sendFile(const std::string& fileName) {
     sendall(buf, fileSize);
     
 }
-
-

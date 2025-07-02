@@ -4,6 +4,7 @@
 
 constexpr char DEFAULT_PORT[] = "12345";
 
+
 // Link with ws2_32.lib
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -62,8 +63,6 @@ class ClientSocket {
 class ServerSocket {
   public:
     ServerSocket(const char* port = DEFAULT_PORT);
-
-    ~ServerSocket();
 
     void bind();
 

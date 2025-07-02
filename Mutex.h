@@ -9,9 +9,10 @@ class Mutex {
     Mutex(const Mutex& mutex) = delete;
     Mutex();
     Mutex(const char* name);
-    Mutex(Mutex&& m) noexcept;
+    Mutex(Mutex&& m);
 
-    Mutex& operator=(Mutex&& other) noexcept;
+
+    Mutex& operator=(Mutex&& other);
     Mutex& operator=(const Mutex& other) = delete;
 
     HANDLE getHandle();
