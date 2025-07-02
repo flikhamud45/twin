@@ -207,6 +207,7 @@ void handleMsg(ClientSocket& client, const std::string& msg) {
             }
             throw e;
         }
+        client.sendMsg(OK_COMMAND);
     }
     else {
         throw ClientException::invalidMsg;
