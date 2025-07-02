@@ -10,6 +10,11 @@ Handle::Handle() : m_handle(NULL) {
     // blank
 }
 
+
+Handle::Handle(Handle&& h) noexcept : m_handle(h.m_handle){
+    h.m_handle = NULL;
+}
+
 Handle::~Handle() {
     if (m_handle != NULL) {
         CloseHandle(m_handle);
@@ -26,4 +31,7 @@ Handle& Handle::operator=(Handle&& h) noexcept {
     return *this;
 }
 
+void Handle::setHandle(HANDLE h) {
+    m_handle = h;
+}
 
