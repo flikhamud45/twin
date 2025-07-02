@@ -12,6 +12,7 @@ class Command(Enum):
 	PING = "ping"
 	RUN = "run"
 	UPLOAD = "upload"
+	DOWNLOAD = "download"
 
 def send_message(sock: socket.socket, message: str) -> None:
 	size = len(message)
@@ -60,6 +61,26 @@ def send_file(sock: socket.socket, file_path: str) -> None:
 				break
 			sock.sendall(chunk)
 		
+def receive_file(sock: socket.socket) -> str:
+	"""Receive a file over the socket."""
+	# receive the file name
+	file_name = receive_message(sock)
+
+	# receive the file size
+	size_bytes = recvall(sock, FILE_SIZE_SIZE)
+	file_size = int.from_bytes(size_bytes, 'big')
+
+	# receive the file content in chunks
+	with open(file_name, 'wb') as f:
+		received_size = 0
+		while received_size < file_size:
+			chunk = recvall(sock, min(CHUNK_SIZE, file_size - received_size))
+			if not chunk:
+				raise ConnectionError("Connection closed")
+			f.write(chunk)
+			received_size += len(chunk)
+	
+	return file_name
 
 def main() -> None:
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -93,6 +114,15 @@ def main() -> None:
 				msg = f"{Command.UPLOAD.value}"
 				send_message(sock, msg)
 				send_file(sock, file_path)
+			case Command.DOWNLOAD:
+				file_name = input("Enter name of file to download: ").strip()
+				if not file_name:
+					print("File name cannot be empty")
+					continue
+				msg = f"{Command.DOWNLOAD.value} {file_name}"
+				send_message(sock, msg)
+				received_file = receive_file(sock)
+				print(f"Received file: {received_file}")
 			case _:
 				print(f"Unknown command: {command}")
 				continue
