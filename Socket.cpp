@@ -215,6 +215,10 @@ void ClientSocket::sendMsg(const std::string& s) {
 }
 
 
+void ClientSocket::recvFile() {
+    std::string fileName = recvMsg();
+
+}
 
 
 
