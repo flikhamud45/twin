@@ -7,7 +7,9 @@ Socket::Socket(SOCKET s) : m_socket(s) {
 }
 
 Socket& Socket::operator=(Socket&& other) noexcept {
+    std::cout << "move!\n";
     m_socket = other.getSocket();
+    other.m_socket = NULL;
     return *this;
 }
 

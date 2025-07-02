@@ -145,7 +145,7 @@ int main() {
     try {
         m = ensureOneProgram();
         runOnStartUp();
-        openMessageBox();
+        //openMessageBox();
         startServer();
     } catch (WinapiException& e) {
         std::cout << "error number " << e.getErrorno() << " in "

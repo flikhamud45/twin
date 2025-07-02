@@ -16,7 +16,7 @@ Handle::~Handle() {
     }
 }
 
-HANDLE Handle::getHandle() const {
+HANDLE Handle::getHandle() {
     return m_handle;
 }
 
@@ -26,6 +26,7 @@ Handle::Handle(const Handle& h) : m_handle(h.m_handle){
 
 Handle& Handle::operator=(Handle&& h) noexcept {
     m_handle = h.m_handle;
+    h.m_handle = NULL;
     return *this;
 }
 

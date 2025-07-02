@@ -16,6 +16,12 @@ Mutex::Mutex(const char* name)
     
 }
 
+Mutex& Mutex::operator=(Mutex&& other) noexcept {
+    m_handle = other.m_handle;
+    return *this;
+}
+
+
 HANDLE Mutex::getHandle() const {
     return m_handle.getHandle();
 }

@@ -13,7 +13,7 @@ class Handle
 
     virtual ~Handle();
 
-    HANDLE getHandle() const;
+    HANDLE getHandle();
 
   protected:
     HANDLE m_handle;
