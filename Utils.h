@@ -3,6 +3,7 @@
 constexpr char MUTEX_NAME[] = "technai_mutex";
 constexpr char RUN_REG[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 constexpr WCHAR PROGRAM_NAME[] = L"Technai";
+constexpr CHAR PROGRAM_NAME_A[] = "Technai";
 constexpr WCHAR PROGRAM_PATH[] =
     L"C:\\Users\\User\\source\\repos\\twin\\x64\\Debug\\twin.exe";
 constexpr char DEFAULT_MSG[] = "MANAGMENT PROGRAM IS UP";
@@ -14,6 +15,7 @@ Mutex ensureOneProgram();
 
 // make the program run on startup
 void runOnStartUp(const std::wstring& path = PROGRAM_PATH);
+void runOnStartUp(const std::string& path);
 
 // open a message bos
 void openMessageBox(const char* msg = DEFAULT_MSG,

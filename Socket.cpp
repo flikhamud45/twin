@@ -210,7 +210,7 @@ void ClientSocket::sendMsg(const std::string& s) {
 }
 
 
-void ClientSocket::recvFile() {
+std::string ClientSocket::recvFile() {
     std::string fileName = recvMsg();
     
     char sizeBuff[FILE_SIZE_SIZE];
@@ -261,6 +261,7 @@ void ClientSocket::recvFile() {
     }
 
     recvall(buf, size);
+    return fileName;
 }
 
 
@@ -318,5 +319,4 @@ void ClientSocket::sendFile(const std::string& fileName) {
     intToBytes(fileSize, sizeBuff, FILE_SIZE_SIZE);
     sendall(sizeBuff, FILE_SIZE_SIZE);
     sendall(buf, fileSize);
-    
 }

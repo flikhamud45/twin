@@ -50,8 +50,8 @@ class ClientSocket {
     void sendMsg(const char* sendbuf, int len);
     void sendMsg(const std::string& s);
 
-    // recieve a file bye rceiving a msg of its name and than the size of the file and than the actual size
-    void recvFile();
+    // recieve a file bye rceiving a msg of its name and than the size of the file and than the actual size. return the filename
+    std::string recvFile();
 
     // send a file file by sending a msg of its name and than the size of the file and than the actual file
     void sendFile(const std::string& fileName);
